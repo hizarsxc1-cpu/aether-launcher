@@ -1,9 +1,10 @@
+
 package com.aether.launcher
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -12,9 +13,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -151,92 +152,14 @@ fun AetherApp() {
 
 @Composable
 fun ScenicBackground() {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        drawRect(
-            brush = Brush.verticalGradient(
-                listOf(
-                    Color(0xFF29285D),
-                    Color(0xFFB66E9C),
-                    Color(0xFFFFB56E),
-                    Color(0xFF182A43)
-                )
-            )
-        )
-
-        // SUN
-        drawCircle(
-            color = Color(0xFFFFE5A0),
-            radius = 34f,
-            center = androidx.compose.ui.geometry.Offset(
-                size.width * 0.78f,
-                size.height * 0.43f
-            )
-        )
-
-        // BACK MOUNTAINS
-        val mountain1 = Path().apply {
-            moveTo(0f, size.height * 0.63f)
-            lineTo(size.width * 0.20f, size.height * 0.25f)
-            lineTo(size.width * 0.38f, size.height * 0.59f)
-            lineTo(size.width * 0.58f, size.height * 0.30f)
-            lineTo(size.width * 0.82f, size.height * 0.62f)
-            lineTo(size.width, size.height * 0.40f)
-            lineTo(size.width, size.height)
-            lineTo(0f, size.height)
-            close()
-        }
-
-        drawPath(mountain1, Color(0xFF353B65))
-
-        // FRONT MOUNTAINS
-        val mountain2 = Path().apply {
-            moveTo(0f, size.height * 0.72f)
-            lineTo(size.width * 0.30f, size.height * 0.46f)
-            lineTo(size.width * 0.48f, size.height * 0.68f)
-            lineTo(size.width * 0.72f, size.height * 0.48f)
-            lineTo(size.width, size.height * 0.70f)
-            lineTo(size.width, size.height)
-            lineTo(0f, size.height)
-            close()
-        }
-
-        drawPath(mountain2, Color(0xFF202D48))
-
-        // LAKE
-        drawRect(
-            brush = Brush.verticalGradient(
-                listOf(
-                    Color(0xAA765A83),
-                    Color(0xEE142D49)
-                ),
-                startY = size.height * 0.67f
-            ),
-            topLeft = androidx.compose.ui.geometry.Offset(
-                0f,
-                size.height * 0.67f
-            ),
-            size = androidx.compose.ui.geometry.Size(
-                size.width,
-                size.height * 0.33f
-            )
-        )
-
-        // WATER REFLECTION
-        for (i in 0..8) {
-            val y = size.height * (0.73f + i * 0.028f)
-            drawRect(
-                color = Color(0x44FFC98D),
-                topLeft = androidx.compose.ui.geometry.Offset(
-                    size.width * 0.55f,
-                    y
-                ),
-                size = androidx.compose.ui.geometry.Size(
-                    size.width * 0.35f,
-                    3f
-                )
-            )
-        }
-    }
+    Image(
+        painter = painterResource(
+            id = R.drawable.aether_background
+        ),
+        contentDescription = "Aether Minecraft Landscape",
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop
+    )
 }
 
 @Composable

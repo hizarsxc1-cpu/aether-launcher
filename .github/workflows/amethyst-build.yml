@@ -137,6 +137,33 @@ jobs:
               <gradient android:angle="135" android:startColor="#E51B2B49" android:endColor="#E50C172A"/>
               <stroke android:width="1dp" android:color="#665D8FFF"/>
           </shape>""")
+          # Original block-world landscape artwork for the Aether home screen.
+          (drawable / "aether_world.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="1080dp" android:height="1920dp"
+              android:viewportWidth="1080" android:viewportHeight="1920">
+              <path android:fillColor="#101B35" android:pathData="M0,0h1080v1920h-1080z"/>
+              <path android:fillColor="#243B66" android:pathData="M0,0h1080v820h-1080z"/>
+              <path android:fillColor="#526D91" android:pathData="M0,650l180,0 0,-90 90,0 0,-90 90,0 0,90 90,0 0,-150 90,0 0,-80 90,0 0,80 90,0 0,90 90,0 0,90 90,0 0,260h-1080z"/>
+              <path android:fillColor="#D8E9F1" android:pathData="M270,560l90,0 0,90 90,0 0,90 -180,0z M540,410l90,0 0,90 90,0 0,90 -180,0z"/>
+              <path android:fillColor="#263F42" android:pathData="M0,820h1080v1100h-1080z"/>
+              <path android:fillColor="#315B4D" android:pathData="M0,790h180v90h180v-70h180v100h180v-80h180v60h180v180h-1080z"/>
+              <path android:fillColor="#47775A" android:pathData="M0,980h180v90h180v-90h180v130h180v-90h180v90h180v810h-1080z"/>
+              <path android:fillColor="#1A3440" android:pathData="M0,1330h1080v590h-1080z"/>
+              <path android:fillColor="#315E70" android:pathData="M0,1410h180v-45h180v45h180v-45h180v45h180v-45h180v555h-1080z"/>
+              <path android:fillColor="#6BA0A0" android:pathData="M0,1500h1080v26h-1080z M0,1650h1080v18h-1080z M0,1800h1080v22h-1080z"/>
+              <path android:fillColor="#F1D9A0" android:pathData="M790,220a92,92 0,1 0,184 0a92,92 0,1 0,-184 0"/>
+              <path android:fillColor="#182B36" android:pathData="M130,740h34v-140h34v140h34v140h-102z M150,600h62v-70h-62z M900,760h34v-150h34v150h34v130h-102z M920,610h62v-70h-62z"/>
+              <path android:fillColor="#6D9B69" android:pathData="M100,880h120v-60h-120z M870,900h120v-60h-120z M430,1050h90v-50h-90z"/>
+          </vector>
+          """)
+          (drawable / "aether_hero.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:drawable="@drawable/aether_world"/>
+              <item><shape android:shape="rectangle"><gradient android:angle="90" android:startColor="#66101A30" android:centerColor="#99101A30" android:endColor="#F20C172A"/></shape></item>
+              <item><shape android:shape="rectangle"><corners android:radius="18dp"/><stroke android:width="1dp" android:color="#775D8FFF"/></shape></item>
+          </layer-list>
+          """)
           home_xml = """<?xml version="1.0" encoding="utf-8"?>
           <androidx.constraintlayout.widget.ConstraintLayout
               xmlns:android="http://schemas.android.com/apk/res/android"
@@ -184,7 +211,7 @@ jobs:
                           android:layout_height="wrap_content"
                           android:orientation="vertical"
                           android:padding="18dp"
-                          android:background="@drawable/aether_card">
+                          android:background="@drawable/aether_hero">
                           <TextView
                               android:layout_width="wrap_content"
                               android:layout_height="wrap_content"

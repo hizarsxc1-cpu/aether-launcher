@@ -1,0 +1,39 @@
+name: Build Amethyst Engine
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/amethyst-build.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools"
+
+      - name: Download Amethyst Source
+        run: |
+          git clone --branch v3_openjdk --recursive https://github.com/AngelAuraMC/Amethyst-Android.git amethyst
+
+      - name: Build APK
+        run: |
+          cd amethyst
+          chmod +x gradlew
+          ./gradlew :app_pojavlauncher:assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aether-Engine-Test
+          path: amethyst/app_pojavlauncher/build/outputs/apk/debug/*.apk

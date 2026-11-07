@@ -168,7 +168,7 @@ jobs:
                   return xml[:match.start()] + view + xml[match.end():]
 
               t = patch_view(t, "com.kdt.mcgui.mcAccountSpinner", "account_spinner", "0dp", {
-                  "app:layout_constraintStart_toStartOf": "parent",
+                  "app:layout_constraintStart_toEndOf": "@id/aether_nav_rail",
                   "app:layout_constraintEnd_toStartOf": "@id/setting_button"})
               t = patch_view(t, "androidx.fragment.app.FragmentContainerView", "container_fragment", "0dp", {
                   "app:layout_constraintStart_toEndOf": "@id/aether_nav_rail",

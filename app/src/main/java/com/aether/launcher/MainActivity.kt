@@ -1,20 +1,22 @@
+
 package com.aether.launcher
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -23,31 +25,40 @@ import androidx.compose.ui.unit.sp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            AetherApp()
-        }
+        setContent { AetherApp() }
     }
 }
 
-private val DarkBlue = Color(0xFF101D2C)
-private val LightBlue = Color(0xFF8BD9E8)
-private val Gold = Color(0xFFFFD98A)
+private val Dark = Color(0xFF101D2C)
+private val Cyan = Color(0xFF8BD9E8)
+private val Panel = Color(0xEE172B3B)
 
 @Composable
 fun AetherApp() {
+    var page by remember { mutableStateOf("home") }
+    var ram by remember { mutableStateOf("2048 MB") }
+    var version by remember { mutableStateOf("1.21.10") }
+    var playerName by remember { mutableStateOf("Player") }
+    var message by remember { mutableStateOf("") }
+
     MaterialTheme {
-        BoxWithConstraints(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBlue)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF142C46),
+                            Color(0xFF386B82),
+                            Dark
+                        )
+                    )
+                )
         ) {
-            ScenicBackground()
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 35.dp, vertical = 22.dp),
-                verticalArrangement = Arrangement.SpaceBetween
+                    .padding(24.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -56,136 +67,84 @@ fun AetherApp() {
                 ) {
                     Column {
                         Text(
-                            text = "✦ AETHER",
+                            "✦ AETHER",
                             color = Color.White,
-                            fontSize = 27.sp,
+                            fontSize = 26.sp,
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 3.sp
                         )
                         Text(
-                            text = "MINECRAFT JAVA LAUNCHER",
-                            color = LightBlue,
+                            "MINECRAFT JAVA LAUNCHER",
+                            color = Cyan,
                             fontSize = 9.sp,
                             letterSpacing = 2.sp
                         )
                     }
 
                     Text(
-                        text = "SETTINGS  ⚙",
+                        "⚙ SETTINGS",
                         color = Color.White,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "WELCOME BACK",
-                        color = LightBlue,
-                        fontSize = 11.sp,
-                        letterSpacing = 4.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Your world awaits.",
-                        color = Color.White,
-                        fontSize = 29.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Column(
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier
-                            .widthIn(max = 390.dp)
-                            .fillMaxWidth()
-                            .background(
-                                Color(0xCC142638),
-                                RoundedCornerShape(18.dp)
-                            )
-                            .border(
-                                1.dp,
-                                Color(0x668BD9E8),
-                                RoundedCornerShape(18.dp)
-                            )
-                            .padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "DEFAULT INSTANCE",
-                            color = LightBlue,
-                            fontSize = 10.sp,
-                            letterSpacing = 3.sp
-                        )
+                            .clickable { page = "settings" }
+                            .padding(10.dp)
+                    )
+                }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                Spacer(Modifier.height(20.dp))
 
-                        Text(
-                            text = "Minecraft 1.21.10",
-                            color = Color.White,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Button(
-                            onClick = {},
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(49.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF70C7D7),
-                                contentColor = Color(0xFF102333)
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(
-                                text = "▶   PLAY NOW",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 2.sp
-                            )
+                when (page) {
+                    "home" -> HomePage(
+                        version = version,
+                        ram = ram,
+                        onPlay = {
+                            message = "Minecraft belum terhubung. Fitur Play akan dikembangkan berikutnya."
                         }
+                    )
+
+                    "settings" -> SettingsPage(
+                        ram = ram,
+                        version = version,
+                        onRamChange = { ram = it },
+                        onVersionChange = { version = it }
+                    )
+
+                    "account" -> AccountPage(
+                        name = playerName,
+                        onNameChange = { playerName = it }
+                    )
+                }
+
+                Spacer(Modifier.weight(1f))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Panel, RoundedCornerShape(14.dp))
+                        .padding(5.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    NavItem("⌂  HOME", page == "home") {
+                        page = "home"
+                        message = ""
+                    }
+                    NavItem("⚙  SETTINGS", page == "settings") {
+                        page = "settings"
+                        message = ""
+                    }
+                    NavItem("♙  ACCOUNT", page == "account") {
+                        page = "account"
+                        message = ""
                     }
                 }
 
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        SettingTile(
-                            title = "GAME VERSION",
-                            value = "1.21.10",
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        SettingTile(
-                            title = "MEMORY",
-                            value = "2048 MB",
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        SettingTile(
-                            title = "RENDER",
-                            value = "Default",
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
+                if (message.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "AETHER LAUNCHER  •  CRAFT YOUR OWN WORLD",
-                        color = Color(0xFFB5CBD5),
-                        fontSize = 9.sp,
-                        letterSpacing = 1.5.sp,
+                        message,
+                        color = Cyan,
+                        fontSize = 11.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -196,132 +155,283 @@ fun AetherApp() {
 }
 
 @Composable
-fun ScenicBackground() {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    Color(0xFF142C46),
-                    Color(0xFF386B82),
-                    Color(0xFF172E3A)
+fun HomePage(
+    version: String,
+    ram: String,
+    onPlay: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            "WELCOME BACK",
+            color = Cyan,
+            fontSize = 11.sp,
+            letterSpacing = 4.sp
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            "Your world awaits.",
+            color = Color.White,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(22.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Panel, RoundedCornerShape(20.dp))
+                .border(1.dp, Color(0x668BD9E8), RoundedCornerShape(20.dp))
+                .padding(22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                "DEFAULT INSTANCE",
+                color = Cyan,
+                fontSize = 10.sp,
+                letterSpacing = 3.sp
+            )
+
+            Spacer(Modifier.height(10.dp))
+
+            Text(
+                "Minecraft $version",
+                color = Color.White,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                "Memory: $ram",
+                color = Color.LightGray,
+                fontSize = 12.sp
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            Button(
+                onClick = onPlay,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Cyan,
+                    contentColor = Dark
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    "▶  PLAY NOW",
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 2.sp
                 )
-            )
-        )
-
-        drawCircle(
-            color = Color(0xFFFFD99A),
-            radius = size.width * 0.065f,
-            center = androidx.compose.ui.geometry.Offset(
-                size.width * 0.78f,
-                size.height * 0.28f
-            )
-        )
-
-        val farMountain = Path().apply {
-            moveTo(0f, size.height * 0.65f)
-            lineTo(size.width * 0.20f, size.height * 0.32f)
-            lineTo(size.width * 0.38f, size.height * 0.62f)
-            lineTo(size.width * 0.58f, size.height * 0.35f)
-            lineTo(size.width * 0.82f, size.height * 0.65f)
-            lineTo(size.width, size.height * 0.42f)
-            lineTo(size.width, size.height)
-            lineTo(0f, size.height)
-            close()
+            }
         }
 
-        drawPath(
-            path = farMountain,
-            color = Color(0xFF294B58)
+        Spacer(Modifier.height(18.dp))
+
+        Text(
+            "CRAFT YOUR OWN WORLD",
+            color = Color.White.copy(alpha = 0.7f),
+            fontSize = 10.sp,
+            letterSpacing = 2.sp
         )
-
-        val nearMountain = Path().apply {
-            moveTo(0f, size.height * 0.75f)
-            lineTo(size.width * 0.25f, size.height * 0.48f)
-            lineTo(size.width * 0.47f, size.height * 0.78f)
-            lineTo(size.width * 0.70f, size.height * 0.50f)
-            lineTo(size.width, size.height * 0.73f)
-            lineTo(size.width, size.height)
-            lineTo(0f, size.height)
-            close()
-        }
-
-        drawPath(
-            path = nearMountain,
-            color = Color(0xFF183B3B)
-        )
-
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    Color(0xFF397D83),
-                    Color(0xFF102E3B)
-                ),
-                startY = size.height * 0.72f,
-                endY = size.height
-            ),
-            topLeft = androidx.compose.ui.geometry.Offset(
-                0f,
-                size.height * 0.72f
-            ),
-            size = androidx.compose.ui.geometry.Size(
-                size.width,
-                size.height * 0.28f
-            )
-        )
-
-        for (i in 0..12) {
-            val x = size.width * (i / 12f)
-            drawLine(
-                color = Color(0x447BD0D0),
-                start = androidx.compose.ui.geometry.Offset(
-                    x,
-                    size.height * 0.82f
-                ),
-                end = androidx.compose.ui.geometry.Offset(
-                    x + size.width * 0.04f,
-                    size.height
-                ),
-                strokeWidth = 2f
-            )
-        }
     }
 }
 
 @Composable
-fun SettingTile(
-    title: String,
-    value: String,
-    modifier: Modifier = Modifier
+fun SettingsPage(
+    ram: String,
+    version: String,
+    onRamChange: (String) -> Unit,
+    onVersionChange: (String) -> Unit
 ) {
     Column(
-        modifier = modifier
+        modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            "SETTINGS",
+            color = Color.White,
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            "Customize your launcher",
+            color = Cyan,
+            fontSize = 12.sp
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        SectionTitle("MEMORY ALLOCATION")
+
+        listOf("1024 MB", "2048 MB", "3072 MB", "4096 MB").forEach {
+            ChoiceItem(
+                title = it,
+                selected = ram == it
+            ) {
+                onRamChange(it)
+            }
+        }
+
+        Spacer(Modifier.height(18.dp))
+
+        SectionTitle("MINECRAFT VERSION")
+
+        listOf("1.21.10", "1.21.8", "1.20.1", "1.19.4").forEach {
+            ChoiceItem(
+                title = it,
+                selected = version == it
+            ) {
+                onVersionChange(it)
+            }
+        }
+
+        Spacer(Modifier.height(15.dp))
+
+        Text(
+            "Changes are saved while the app is open.",
+            color = Color.LightGray,
+            fontSize = 11.sp
+        )
+    }
+}
+
+@Composable
+fun AccountPage(
+    name: String,
+    onNameChange: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            "PLAYER ACCOUNT",
+            color = Color.White,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(20.dp))
+
+        Text("♙", color = Cyan, fontSize = 60.sp)
+
+        Text(
+            "Player Name",
+            color = Cyan,
+            fontSize = 12.sp
+        )
+
+        Spacer(Modifier.height(10.dp))
+
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            singleLine = true,
+            label = { Text("Username") },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = Cyan,
+                unfocusedBorderColor = Color.LightGray,
+                focusedLabelColor = Cyan,
+                unfocusedLabelColor = Color.LightGray
+            )
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            "Local profile only • Microsoft login belum tersedia",
+            color = Color.LightGray,
+            fontSize = 10.sp,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun SectionTitle(title: String) {
+    Text(
+        title,
+        color = Cyan,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 2.sp
+    )
+    Spacer(Modifier.height(8.dp))
+}
+
+@Composable
+fun ChoiceItem(
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
             .background(
-                Color(0xCC172B3B),
-                RoundedCornerShape(12.dp)
+                if (selected) Color(0xFF285365) else Panel,
+                RoundedCornerShape(10.dp)
             )
             .border(
                 1.dp,
-                Color(0x447CC5D5),
-                RoundedCornerShape(12.dp)
+                if (selected) Cyan else Color.Transparent,
+                RoundedCornerShape(10.dp)
             )
-            .padding(vertical = 13.dp, horizontal = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .clickable { onClick() }
+            .padding(15.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = title,
-            color = LightBlue,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(5.dp))
-
-        Text(
-            text = value,
+            title,
             color = Color.White,
-            fontSize = 13.sp,
             fontWeight = FontWeight.Bold
         )
+
+        Text(
+            if (selected) "✓ SELECTED" else "SELECT",
+            color = if (selected) Cyan else Color.LightGray,
+            fontSize = 10.sp
+        )
     }
+}
+
+@Composable
+fun NavItem(
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Text(
+        title,
+        color = if (selected) Cyan else Color.White,
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier
+            .clickable { onClick() }
+            .padding(horizontal = 8.dp, vertical = 12.dp)
+    )
 }

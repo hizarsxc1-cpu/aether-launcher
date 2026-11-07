@@ -431,7 +431,7 @@ jobs:
                           android:layout_width="match_parent"
                           android:layout_height="52dp"
                           android:layout_marginTop="10dp"
-                          android:text="BERITA &amp; WIKI AETHER"
+                          android:text="OPEN AETHER WIKI"
                           android:textColor="#F4FAFC"
                           android:background="@drawable/aether_card" />
                   </LinearLayout>
@@ -564,7 +564,8 @@ jobs:
                   '        heapInfo.setText("RAM\\n" + ramMb + " MB");',
                   '        String runtimeName = LauncherPreferences.PREF_DEFAULT_RUNTIME;',
                   '        javaInfo.setText("JAVA\\n" + (runtimeName == null || runtimeName.isEmpty() ? "Not installed" : runtimeName));',
-                  '        rendererInfo.setText("RENDERER\\nConfigure in Settings");',
+                  '        String activeRenderer = Tools.LOCAL_RENDERER;',
+                  '        rendererInfo.setText("RENDERER\\n" + (activeRenderer == null || activeRenderer.trim().isEmpty() ? "Open settings" : activeRenderer));',
                   '        android.widget.TextView versionInfo = view.findViewById(R.id.aether_version_value);',
                   '        String selectedProfile = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "Default");',
                   '        versionInfo.setText("PROFILE\\n" + (selectedProfile == null ? "Default" : selectedProfile));',
@@ -618,7 +619,9 @@ jobs:
                   findViewById(R.id.aether_nav_about).setOnClickListener(v ->
                       new androidx.appcompat.app.AlertDialog.Builder(this)
                           .setTitle("Aether Launcher")
-                          .setMessage("Minecraft Java Edition for Android\\nPowered by the Amethyst engine\\n\\nOpen-source project")
+                          .setMessage("Minecraft Java Edition for Android\\nPowered by the Amethyst engine\\n\\nDevice: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL + "\\nAndroid: " + android.os.Build.VERSION.RELEASE + "\\n\\nAether is an open-source launcher build based on Amethyst.")
+                          .setNeutralButton("Aether Wiki", (d, w) -> Tools.openURL(this, Tools.URL_HOME))
+                          .setNegativeButton("Community", (d, w) -> Tools.openURL(this, getString(R.string.discord_invite)))
                           .setPositiveButton(android.R.string.ok, null)
                           .show());"""
               if 'aether_nav_home' not in j:

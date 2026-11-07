@@ -66,6 +66,23 @@ jobs:
               <corners android:radius="14dp" />
           </shape>
           """)
+          (drawable / "aether_hero.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="720dp" android:height="380dp"
+              android:viewportWidth="720" android:viewportHeight="380">
+              <path android:fillColor="#17263C" android:pathData="M0,0h720v380h-720z"/>
+              <path android:fillColor="#5B3C55" android:pathData="M0,0h720v380h-720z"/>
+              <path android:fillColor="#E78A62" android:pathData="M0,180h720v200h-720z"/>
+              <path android:fillColor="#F5C17C" android:pathData="M520,50a54,54 0,1 0,108 0a54,54 0,1 0,-108 0"/>
+              <path android:fillColor="#30465A" android:pathData="M0,230l110,-85 92,62 100,-105 112,105 96,-78 110,86 100,-40v205h-720z"/>
+              <path android:fillColor="#1D3947" android:pathData="M0,280l100,-50 86,35 102,-74 110,68 95,-42 110,44 117,-58v177h-720z"/>
+              <path android:fillColor="#122B35" android:pathData="M0,320l120,-60 90,48 110,-62 105,55 95,-48 100,50 100,-42v119h-720z"/>
+              <path android:fillColor="#101F2C" android:pathData="M72,250h18v-42h-18z M62,220h38v-20h-38z M68,190h26v-18h-26z M620,258h20v-50h-20z M608,220h44v-22h-44z M616,188h28v-18h-28z"/>
+              <path android:fillColor="#20B7B5" android:pathData="M340,286h52v-82h-52z M328,210h76v-12h-76z M348,192h36v-10h-36z"/>
+              <path android:fillColor="#071722" android:pathData="M354,286h8v-70h-8z M370,286h8v-70h-8z"/>
+          </vector>
+          """)
+
 
           # Apply the app name to every language, including Indonesian.
           for p in res.glob("values*/strings.xml"):
@@ -224,7 +241,7 @@ jobs:
                           android:orientation="vertical"
                           android:gravity="bottom"
                           android:padding="20dp"
-                          android:background="@drawable/aether_card">
+                          android:background="@drawable/aether_hero">
                           <TextView
                               android:layout_width="wrap_content"
                               android:layout_height="wrap_content"

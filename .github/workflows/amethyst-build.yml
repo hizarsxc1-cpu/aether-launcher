@@ -93,7 +93,32 @@ jobs:
               t = t.replace('android:background="@android:color/transparent"', 'android:background="@drawable/aether_wallpaper"', 1)
               t = t.replace('android:dropDownVerticalOffset="@dimen/_52sdp"', 'android:dropDownVerticalOffset="@dimen/_52sdp"\n        android:background="@drawable/aether_card"', 1)
               t = t.replace('android:background="?attr/selectableItemBackground"', 'android:background="@drawable/aether_card"', 1)
-              activity_layout.write_text(t)
+              # Correctly size the main content beside the rail (the earlier textual
+              # replacements were too strict about XML whitespace).
+              def patch_view(tag, view_id, width, extra_attrs):
+                  nonlocal_dummy = None
+                  pattern = r"(<" + re.escape(tag) + r"\\b[^>]*android:id=\"@\\+id/" + re.escape(view_id) + r"\"[^>]*>)"
+                  match = re.search(pattern, t, flags=re.S)
+                  if not match:
+                      return
+                  block = match.group(1)
+                  block = re.sub(r'android:layout_width="[^"]+"', 'android:layout_width="' + width + '"', block, count=1)
+                  for attr, value in extra_attrs.items():
+                      if attr in block:
+                          block = re.sub(re.escape(attr) + r'="[^"]*"', attr + '="' + value + '"', block, count=1)
+                      else:
+                          block = block[:-1] + '\\n        ' + attr + '="' + value + '" />'
+                  t = t[:match.start()] + block + t[match.end():]
+              patch_view("com.kdt.mcgui.mcAccountSpinner", "account_spinner", "0dp", {
+                  "app:layout_constraintStart_toStartOf": "parent",
+                  "app:layout_constraintEnd_toStartOf": "@id/setting_button"})
+              patch_view("androidx.fragment.app.FragmentContainerView", "container_fragment", "0dp", {
+                  "app:layout_constraintStart_toEndOf": "@id/aether_nav_rail",
+                  "app:layout_constraintEnd_toEndOf": "parent"})
+              patch_view("com.kdt.mcgui.ProgressLayout", "progress_layout", "0dp", {
+                  "app:layout_constraintStart_toEndOf": "@id/aether_nav_rail",
+                  "app:layout_constraintEnd_toEndOf": "parent"})
+                            activity_layout.write_text(t)
 
           # Replace the stock Amethyst adaptive launcher icon with an original Aether mark.
           foreground = res / "drawable/ic_aether_foreground.xml"

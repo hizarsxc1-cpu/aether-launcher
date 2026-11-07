@@ -84,6 +84,8 @@ jobs:
               additions = anchor + '\n        <item name="colorAccent">#12AFC0</item>\n        <item name="colorControlActivated">#12AFC0</item>\n        <item name="android:colorAccent">#12AFC0</item>'
               if 'name="colorAccent"' not in t:
                   t = t.replace(anchor, additions)
+              if 'name="android:windowBackground"' not in t:
+                  t = t.replace('</style>', '        <item name="android:windowBackground">@drawable/aether_wallpaper</item>\n    </style>', 1)
               styles.write_text(t)
 
           # Give the account/settings bar the same Aether glass treatment.
@@ -144,7 +146,7 @@ jobs:
                   findViewById(R.id.aether_nav_settings).setOnClickListener(mSettingButtonListener);
                   findViewById(R.id.aether_nav_controls).setOnClickListener(v ->
                           startActivity(new android.content.Intent(this, CustomControlsActivity.class)));
-                  findViewById(R.id.aether_nav_mods).setOnClickListener(v -> modInstallerLauncher.launch(null));"""
+                  findViewById(R.id.aether_nav_mods).setOnClickListener(v -> Tools.installMod(this, false));"""
               if 'aether_nav_home' not in j:
                   j = j.replace(anchor, wiring, 1)
               launcher_java.write_text(j)

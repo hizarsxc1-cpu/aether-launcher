@@ -154,8 +154,13 @@ jobs:
                       android:gravity="center" android:text="A" android:textSize="24sp"
                       android:textStyle="bold" android:textColor="#FFFFFF"
                       android:background="@drawable/aether_card"/>
+                  <TextView android:id="@+id/aether_nav_account" android:layout_width="match_parent"
+                      android:layout_height="58dp" android:layout_marginTop="8dp"
+                      android:gravity="center" android:text="＋&#10;Account" android:textSize="11sp"
+                      android:textColor="#FFFFFF" android:clickable="true" android:focusable="true"
+                      android:background="?attr/selectableItemBackground"/>
                   <TextView android:id="@+id/aether_nav_home" android:layout_width="match_parent"
-                      android:layout_height="64dp" android:layout_marginTop="18dp"
+                      android:layout_height="58dp" android:layout_marginTop="4dp"
                       android:gravity="center" android:text="⌂&#10;Home" android:textSize="11sp"
                       android:textColor="#65D8E5" android:clickable="true" android:focusable="true"
                       android:background="?attr/selectableItemBackground"/>
@@ -781,6 +786,26 @@ jobs:
                   j = j[:closing] + method + "\n" + j[closing:]
               menu_java.write_text(j)
 
+              if "openAetherModsFolder()" not in j:
+                  closing = j.rfind("}")
+                  method = """
+              public void openAetherModsFolder() {
+                  try {
+                      File modsFolder = new File(getCurrentProfileDirectory(), "mods");
+                      if (!modsFolder.exists() && !modsFolder.mkdirs()) {
+                          Toast.makeText(requireContext(), "Folder mods gagal dibuat", Toast.LENGTH_LONG).show();
+                          return;
+                      }
+                      openPath(requireContext(), modsFolder, false);
+                  } catch (Exception error) {
+                      Tools.showError(requireContext(), "Gagal membuka folder mods", error);
+                  }
+              }
+
+              """
+                  j = j[:closing] + method + j[closing:]
+              menu_java.write_text(j)
+
           launcher_java = Path("amethyst/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/LauncherActivity.java")
           if launcher_java.exists():
               j = launcher_java.read_text()
@@ -792,6 +817,8 @@ jobs:
               }""", 1)
               anchor = '        mSettingsButton.setOnClickListener(mSettingButtonListener);'
               wiring = anchor + """
+                  findViewById(R.id.aether_nav_account).setOnClickListener(v ->
+                      ExtraCore.setValue(ExtraConstants.SELECT_AUTH_METHOD, true));
                   findViewById(R.id.aether_nav_home).setOnClickListener(v -> Tools.backToMainMenu(this));
                   findViewById(R.id.aether_nav_settings).setOnClickListener(mSettingButtonListener);
                   findViewById(R.id.aether_nav_versions).setOnClickListener(v -> {
@@ -801,7 +828,18 @@ jobs:
                   });
                   findViewById(R.id.aether_nav_controls).setOnClickListener(v ->
                           startActivity(new android.content.Intent(this, CustomControlsActivity.class)));
-                  findViewById(R.id.aether_nav_mods).setOnClickListener(v -> Tools.installMod(this, false));
+                  findViewById(R.id.aether_nav_mods).setOnClickListener(v -> {
+                      Fragment current = getSupportFragmentManager().findFragmentById(mFragmentView.getId());
+                      if (current instanceof MainMenuFragment) {
+                          ((MainMenuFragment) current).openAetherModsFolder();
+                      } else {
+                          Tools.backToMainMenu(this);
+                          mFragmentView.post(() -> {
+                              Fragment home = getSupportFragmentManager().findFragmentById(mFragmentView.getId());
+                              if (home instanceof MainMenuFragment) ((MainMenuFragment) home).openAetherModsFolder();
+                          });
+                      }
+                  });
                   findViewById(R.id.aether_nav_about).setOnClickListener(v ->
                       new androidx.appcompat.app.AlertDialog.Builder(this)
                           .setTitle("Aether Launcher")

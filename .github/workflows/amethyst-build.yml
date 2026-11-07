@@ -1,4 +1,4 @@
-name: Build Amethyst Engine
+name: Build Aether Launcher
 
 on:
   workflow_dispatch:
@@ -27,9 +27,20 @@ jobs:
           git config --global url."https://github.com/".insteadOf "git@github.com:"
           git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
 
-      - name: Download Amethyst Source
+      - name: Download Amethyst Engine
         run: |
           git clone --branch v3_openjdk --recursive https://github.com/AngelAuraMC/Amethyst-Android.git amethyst
+
+      - name: Rebrand app as Aether
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("amethyst/app_pojavlauncher/src/main/res/values/strings.xml")
+          s = p.read_text()
+          s = s.replace('<string name="app_name" translatable="false">Amethyst</string>', '<string name="app_name" translatable="false">Aether Launcher</string>')
+          s = s.replace('<string name="app_short_name" translatable="false">Amethyst</string>', '<string name="app_short_name" translatable="false">Aether</string>')
+          p.write_text(s)
+          PY
 
       - name: Build APK
         run: |
@@ -37,8 +48,8 @@ jobs:
           chmod +x gradlew
           ./gradlew :app_pojavlauncher:assembleDebug
 
-      - name: Upload APK
+      - name: Upload Aether APK
         uses: actions/upload-artifact@v4
         with:
-          name: Aether-Engine-Test
+          name: Aether-Launcher-APK
           path: amethyst/app_pojavlauncher/build/outputs/apk/debug/*.apk

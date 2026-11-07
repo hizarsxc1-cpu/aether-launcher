@@ -101,6 +101,31 @@ jobs:
           round_icon = res / "mipmap-anydpi-v26/ic_launcher_round.xml"
           if round_icon.exists():
               round_icon.write_text(adaptive.read_text())
+          # Aether visual layer: a deep twilight gradient and softer glass-like panels.
+          drawable = res / "drawable"
+          drawable.mkdir(parents=True, exist_ok=True)
+          (drawable / "aether_wallpaper.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item><shape android:shape="rectangle"><gradient android:angle="135" android:startColor="#080F20" android:centerColor="#17233D" android:endColor="#090D1B" android:type="linear"/></shape></item>
+              <item android:gravity="top|right"><shape android:shape="rectangle"><size android:width="220dp" android:height="220dp"/><corners android:bottomLeftRadius="220dp"/><solid android:color="#302B55A8"/></shape></item>
+              <item android:gravity="bottom|left"><shape android:shape="rectangle"><size android:width="260dp" android:height="260dp"/><corners android:topRightRadius="260dp"/><solid android:color="#302A1C66"/></shape></item>
+          </layer-list>""")
+          (drawable / "aether_panel.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+              <corners android:radius="12dp"/>
+              <gradient android:angle="135" android:startColor="#D91C2C4A" android:endColor="#D9101A30"/>
+              <stroke android:width="1dp" android:color="#554C8DFF"/>
+          </shape>""")
+          # Keep the launcher controls and navigation intact; only refresh their visual surfaces.
+          for layout in [
+              res / "layout/fragment_launcher.xml",
+              res / "layout-land/fragment_launcher.xml",
+          ]:
+              if layout.exists():
+                  s = layout.read_text()
+                  s = s.replace('android:background="@color/background_app"', 'android:background="@drawable/aether_wallpaper"', 1)
+                  layout.write_text(s)
+
           PY
 
       - name: Build APK

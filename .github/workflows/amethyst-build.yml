@@ -563,6 +563,10 @@ jobs:
                       net.kdt.pojavlaunch.value.MinecraftAccount account =
                               ((net.kdt.pojavlaunch.LauncherActivity) requireActivity()).getAetherSelectedAccount();
                       if (account == null || !account.isLocal()) return;
+                      if (account.username == null || !account.username.matches("[A-Za-z0-9_]{1,16}")) {
+                          Toast.makeText(requireContext(), "Nama akun offline tidak valid", Toast.LENGTH_LONG).show();
+                          return;
+                      }
                       File directory = getAetherCapeDirectory();
                       if (!directory.exists() && !directory.mkdirs()) throw new java.io.IOException("Cannot create cape folder");
                       Bitmap bitmap = Bitmap.createBitmap(64, 32, Bitmap.Config.ARGB_8888);
@@ -571,13 +575,19 @@ jobs:
                       Paint capePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
                       capePaint.setColor(Color.rgb(74, 37, 145));
                       canvas.drawRect(0, 0, 64, 32, capePaint);
+                      // The visible outer cape face occupies x=12..22, y=1..17.
                       capePaint.setColor(Color.rgb(100, 225, 255));
+                      capePaint.setStyle(Paint.Style.STROKE);
+                      capePaint.setStrokeWidth(1.8f);
+                      capePaint.setStrokeJoin(Paint.Join.ROUND);
+                      canvas.drawLine(14f, 13f, 17f, 5f, capePaint);
+                      canvas.drawLine(17f, 5f, 20f, 13f, capePaint);
+                      capePaint.setStrokeWidth(1.3f);
+                      canvas.drawLine(15.5f, 10f, 18.5f, 10f, capePaint);
+                      capePaint.setStyle(Paint.Style.FILL);
                       capePaint.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
-                      capePaint.setTextSize(9f);
-                      canvas.drawText("A", 3f, 12f, capePaint);
-                      capePaint.setColor(Color.WHITE);
-                      capePaint.setTextSize(2.6f);
-                      canvas.drawText("AETHER", 1.2f, 16f, capePaint);
+                      capePaint.setTextSize(2.0f);
+                      canvas.drawText("AETHER", 12.2f, 16f, capePaint);
                       File target = new File(directory, account.username + ".png");
                       try (FileOutputStream output = new FileOutputStream(target)) {
                           bitmap.compress(Bitmap.CompressFormat.PNG, 100, output);
@@ -596,6 +606,10 @@ jobs:
                               ((net.kdt.pojavlaunch.LauncherActivity) requireActivity()).getAetherSelectedAccount();
                       if (account == null || !account.isLocal()) {
                           Toast.makeText(requireContext(), "Pilih akun Offline terlebih dahulu", Toast.LENGTH_LONG).show();
+                          return;
+                      }
+                      if (account.username == null || !account.username.matches("[A-Za-z0-9_]{1,16}")) {
+                          Toast.makeText(requireContext(), "Nama akun offline tidak valid", Toast.LENGTH_LONG).show();
                           return;
                       }
                       BitmapFactory.Options bounds = new BitmapFactory.Options();

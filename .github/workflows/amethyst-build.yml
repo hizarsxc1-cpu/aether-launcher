@@ -37,11 +37,70 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path("amethyst/app_pojavlauncher/src/main/res/values/strings.xml")
-          s = p.read_text()
-          s = s.replace('<string name="app_name" translatable="false">Amethyst</string>', '<string name="app_name" translatable="false">Aether Launcher</string>')
-          s = s.replace('<string name="app_short_name" translatable="false">Amethyst</string>', '<string name="app_short_name" translatable="false">Aether</string>')
-          p.write_text(s)
+          import re
+
+          res = Path("amethyst/app_pojavlauncher/src/main/res")
+
+          # Apply the app name to every language, including Indonesian.
+          for p in res.glob("values*/strings.xml"):
+              s = p.read_text()
+              s = re.sub(
+                  r'(<string\s+name="app_name"[^>]*>).*?(</string>)',
+                  r'\g<1>Aether Launcher\g<2>',
+                  s,
+                  flags=re.S
+              )
+              s = s.replace("Amethyst", "Aether Launcher")
+              p.write_text(s)
+
+          # Give the launcher a restrained midnight-and-cyan Aether palette.
+          colors = res / "values/colors.xml"
+          s = colors.read_text()
+          palette = {
+              "minebutton_color": "#12AFC0",
+              "background_app": "#101923",
+              "background_overlay": "#263744",
+              "background_status_bar": "#0B1420",
+              "background_bottom_bar": "#15232F",
+              "primary_text": "#F4FAFC",
+              "secondary_text": "#A9BBC5",
+          }
+          for name, value in palette.items():
+              s = re.sub(
+                  rf'(<color name="{name}">).*?(</color>)',
+                  rf'\g<1>{value}\g<2>',
+                  s,
+                  count=1
+              )
+          if 'name="aether_icon_background"' not in s:
+              s = s.replace("</resources>", '    <color name="aether_icon_background">#101923</color>\n</resources>')
+          colors.write_text(s)
+
+          # Replace the stock Amethyst adaptive launcher icon with an original Aether mark.
+          foreground = res / "drawable/ic_aether_foreground.xml"
+          foreground.write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp" android:height="108dp"
+              android:viewportWidth="108" android:viewportHeight="108">
+              <path android:fillColor="#12AFC0"
+                  android:pathData="M54,15 L91,88 L76,88 L54,45 L32,88 L17,88 Z"/>
+              <path android:fillColor="#F4FAFC"
+                  android:pathData="M39,66 L69,66 L76,79 L32,79 Z"/>
+              <path android:fillColor="#101923"
+                  android:pathData="M49,56 L59,56 L65,68 L43,68 Z"/>
+          </vector>
+          """)
+          adaptive = res / "mipmap-anydpi-v26/ic_launcher.xml"
+          adaptive.write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/aether_icon_background"/>
+              <foreground android:drawable="@drawable/ic_aether_foreground"/>
+          </adaptive-icon>
+          """)
+          # Keep the round adaptive icon consistent as well.
+          round_icon = res / "mipmap-anydpi-v26/ic_launcher_round.xml"
+          if round_icon.exists():
+              round_icon.write_text(adaptive.read_text())
           PY
 
       - name: Build APK

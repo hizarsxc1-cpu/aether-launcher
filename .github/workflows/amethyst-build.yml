@@ -464,6 +464,22 @@ jobs:
                   '        versionInfo.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));'])
               if "aether_ram_value" not in j:
                   j = j.replace(anchor, anchor + "\n" + status, 1)
+              click_anchor = '        versionInfo.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));'
+              click_code = click_anchor + """
+                  heapInfo.setOnClickListener(v -> Tools.swapFragment(requireActivity(),
+                      net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceJavaFragment.class,
+                      "AETHER_JAVA_SETTINGS", null));
+                  javaInfo.setOnClickListener(v -> Tools.swapFragment(requireActivity(),
+                      net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceJavaFragment.class,
+                      "AETHER_JAVA_SETTINGS", null));
+                  rendererInfo.setOnClickListener(v -> Tools.swapFragment(requireActivity(),
+                      net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceRendererSettingsFragment.class,
+                      "AETHER_RENDERER_SETTINGS", null));
+                  heapInfo.setClickable(true);
+                  javaInfo.setClickable(true);
+                  rendererInfo.setClickable(true);"""
+              if "AETHER_JAVA_SETTINGS" not in j:
+                  j = j.replace(click_anchor, click_code, 1)
               if "openAetherVersionEditor" not in j:
                   closing = j.rfind("}")
                   method = "\n".join([

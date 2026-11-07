@@ -262,6 +262,24 @@ jobs:
                               android:textColor="#91AFC8"
                               android:textSize="12sp"/>
                       </LinearLayout>
+                      <LinearLayout
+                          android:layout_width="match_parent"
+                          android:layout_height="wrap_content"
+                          android:orientation="horizontal"
+                          android:layout_marginTop="14dp">
+                          <TextView android:id="@+id/aether_ram_value" android:layout_width="0dp"
+                              android:layout_height="70dp" android:layout_weight="1" android:gravity="center"
+                              android:background="@drawable/aether_card" android:text="HEAP&#10;Loading"
+                              android:textColor="#F4FAFC" android:textSize="11sp" android:textStyle="bold"/>
+                          <TextView android:id="@+id/aether_java_value" android:layout_width="0dp"
+                              android:layout_height="70dp" android:layout_weight="1" android:layout_marginStart="6dp"
+                              android:gravity="center" android:background="@drawable/aether_card"
+                              android:text="JAVA&#10;Loading" android:textColor="#F4FAFC" android:textSize="11sp" android:textStyle="bold"/>
+                          <TextView android:id="@+id/aether_renderer_value" android:layout_width="0dp"
+                              android:layout_height="70dp" android:layout_weight="1" android:layout_marginStart="6dp"
+                              android:gravity="center" android:background="@drawable/aether_card"
+                              android:text="RENDERER&#10;Settings" android:textColor="#F4FAFC" android:textSize="11sp" android:textStyle="bold"/>
+                      </LinearLayout>
                       <TextView
                           android:layout_width="wrap_content"
                           android:layout_height="wrap_content"

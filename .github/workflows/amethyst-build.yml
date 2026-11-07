@@ -504,7 +504,7 @@ jobs:
                   '        versionInfo.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));'])
               news_anchor = '        mNewsButton.setOnClickListener(v -> Tools.openURL(requireActivity(), Tools.URL_HOME));'
               if "aether_news_more" not in j and "aether_news_more" in Path("amethyst/app_pojavlauncher/src/main/res/layout/fragment_launcher.xml").read_text():
-                  j = j.replace(news_anchor, news_anchor + "\\n        view.findViewById(R.id.aether_news_more).setOnClickListener(v -> Tools.openURL(requireActivity(), Tools.URL_HOME));", 1)
+                  j = j.replace(news_anchor, news_anchor + "\n        view.findViewById(R.id.aether_news_more).setOnClickListener(v -> Tools.openURL(requireActivity(), Tools.URL_HOME));", 1)
               if "aether_ram_value" not in j:
                   j = j.replace(anchor, anchor + "\n" + status, 1)
               click_anchor = '        versionInfo.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));'

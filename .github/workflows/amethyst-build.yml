@@ -386,34 +386,37 @@ jobs:
           </androidx.constraintlayout.widget.ConstraintLayout>
           """)
           
-          # Normalize the dashboard XML and add the offline skin import entry.
+          # Add working skin/cape buttons inside the dashboard feature card.
           if menu_layout.exists():
-              dashboard = menu_layout.read_text().lstrip()
-              dashboard = dashboard.replace("INFO & PANDUAN", "INFO &amp; PANDUAN")
+              dashboard = menu_layout.read_text()
               skin_button = """<Button
-                          android:id="@+id/aether_skin_button"
-                          android:layout_width="match_parent"
-                          android:layout_height="50dp"
-                          android:layout_marginTop="12dp"
-                          android:text="IMPORT SKIN OFFLINE"
-                          android:textColor="#FFFFFF"
-                          android:background="@drawable/aether_card"/>"""
-              anchor_skin = """                       </LinearLayout>
-                       <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                           android:layout_marginTop="10dp" android:orientation="vertical"
-                           android:padding="14dp" android:background="@drawable/aether_card">"""
+                              android:id="@+id/aether_skin_button"
+                              android:layout_width="match_parent"
+                              android:layout_height="50dp"
+                              android:layout_marginTop="10dp"
+                              android:text="IMPORT SKIN OFFLINE"
+                              android:textColor="#FFFFFF"
+                              android:background="@drawable/aether_card"/>"""
               cape_button = """<Button
-                          android:id="@+id/aether_cape_button"
-                          android:layout_width="match_parent"
-                          android:layout_height="50dp"
-                          android:layout_marginTop="8dp"
-                          android:text="AETHER CAPE"
-                          android:textColor="#FFFFFF"
-                          android:background="@drawable/aether_card"/>"""
+                              android:id="@+id/aether_cape_button"
+                              android:layout_width="match_parent"
+                              android:layout_height="50dp"
+                              android:layout_marginTop="8dp"
+                              android:text="AETHER CAPE"
+                              android:textColor="#FFFFFF"
+                              android:background="@drawable/aether_card"/>"""
+              # The heading is a stable anchor in the custom dashboard XML.
+              feature_heading = 'android:text="FITUR UNGGULAN"'
               if "aether_skin_button" not in dashboard:
-                  dashboard = dashboard.replace(anchor_skin, skin_button + "\n" + cape_button + "\n" + anchor_skin, 1)
+                  match = re.search(r'(<TextView\b(?=[^>]*android:text="FITUR UNGGULAN")[^>]*/>)', dashboard, flags=re.S)
+                  if not match:
+                      raise RuntimeError("FITUR UNGGULAN heading not found; refusing to build without skin/cape buttons")
+                  insertion = "\n" + skin_button + "\n" + cape_button
+                  dashboard = dashboard[:match.end()] + insertion + dashboard[match.end():]
               elif "aether_cape_button" not in dashboard:
-                  dashboard = dashboard.replace(skin_button, skin_button + "\n" + cape_button, 1)
+                  dashboard = dashboard.replace("</Button>", "</Button>\n" + cape_button, 1)
+              if "aether_skin_button" not in dashboard or "aether_cape_button" not in dashboard:
+                  raise RuntimeError("Skin/cape buttons were not inserted into dashboard XML")
               menu_layout.write_text(dashboard)
 
           # Make the four system cards readable on narrow Android phone screens.

@@ -377,6 +377,46 @@ jobs:
                               android:textColor="#F4FAFC"
                               android:background="@drawable/aether_card" />
                       </LinearLayout>
+                      <TextView
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:layout_marginTop="18dp"
+                          android:layout_marginBottom="8dp"
+                          android:text="FITUR UNGGULAN"
+                          android:textColor="#D8E8F4"
+                          android:textStyle="bold"
+                          android:textSize="12sp"
+                          android:letterSpacing="0.12" />
+                      <LinearLayout
+                          android:layout_width="match_parent"
+                          android:layout_height="wrap_content"
+                          android:orientation="vertical"
+                          android:padding="14dp"
+                          android:background="@drawable/aether_card">
+                          <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                              android:text="✓ Login Microsoft melalui menu akun"
+                              android:textColor="#E7F4FA" android:padding="5dp" />
+                          <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                              android:text="✓ Profil dan versi Minecraft Java"
+                              android:textColor="#E7F4FA" android:padding="5dp" />
+                          <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                              android:text="✓ Instalasi mod dan modloader yang didukung engine"
+                              android:textColor="#E7F4FA" android:padding="5dp" />
+                          <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                              android:text="✓ Kontrol sentuh yang dapat dikustomisasi"
+                              android:textColor="#E7F4FA" android:padding="5dp" />
+                          <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                              android:text="✓ Pengaturan Java, RAM, video, dan renderer"
+                              android:textColor="#E7F4FA" android:padding="5dp" />
+                      </LinearLayout>
+                      <Button
+                          android:id="@+id/aether_news_more"
+                          android:layout_width="match_parent"
+                          android:layout_height="52dp"
+                          android:layout_marginTop="10dp"
+                          android:text="BERITA &amp; WIKI AETHER"
+                          android:textColor="#F4FAFC"
+                          android:background="@drawable/aether_card" />
                   </LinearLayout>
               </ScrollView>
               <com.kdt.mcgui.mcVersionSpinner
@@ -462,6 +502,9 @@ jobs:
                   '        String selectedProfile = LauncherPreferences.DEFAULT_PREF.getString(LauncherPreferences.PREF_KEY_CURRENT_PROFILE, "Default");',
                   '        versionInfo.setText("PROFILE\\n" + (selectedProfile == null ? "Default" : selectedProfile));',
                   '        versionInfo.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));'])
+              news_anchor = '        mNewsButton.setOnClickListener(v -> Tools.openURL(requireActivity(), Tools.URL_HOME));'
+              if "aether_news_more" not in j and "aether_news_more" in Path("amethyst/app_pojavlauncher/src/main/res/layout/fragment_launcher.xml").read_text():
+                  j = j.replace(news_anchor, news_anchor + "\\n        view.findViewById(R.id.aether_news_more).setOnClickListener(v -> Tools.openURL(requireActivity(), Tools.URL_HOME));', 1)
               if "aether_ram_value" not in j:
                   j = j.replace(anchor, anchor + "\n" + status, 1)
               click_anchor = '        versionInfo.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));'

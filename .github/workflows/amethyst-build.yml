@@ -386,6 +386,26 @@ jobs:
           </androidx.constraintlayout.widget.ConstraintLayout>
           """)
           
+          # Normalize the dashboard XML and add the offline skin import entry.
+          if menu_layout.exists():
+              dashboard = menu_layout.read_text().lstrip()
+              dashboard = dashboard.replace("INFO & PANDUAN", "INFO &amp; PANDUAN")
+              skin_button = """<Button
+                          android:id="@+id/aether_skin_button"
+                          android:layout_width="match_parent"
+                          android:layout_height="50dp"
+                          android:layout_marginTop="12dp"
+                          android:text="IMPORT SKIN OFFLINE"
+                          android:textColor="#FFFFFF"
+                          android:background="@drawable/aether_card"/>"""
+              anchor_skin = """                       </LinearLayout>
+                       <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                           android:layout_marginTop="10dp" android:orientation="vertical"
+                           android:padding="14dp" android:background="@drawable/aether_card">"""
+              if "aether_skin_button" not in dashboard:
+                  dashboard = dashboard.replace(anchor_skin, "                       </LinearLayout>\\n                       " + skin_button + "\\n                       <LinearLayout android:layout_width=\\"match_parent\\" android:layout_height=\\"wrap_content\\"\\n                           android:layout_marginTop=\\"10dp\\" android:orientation=\\"vertical\\"\\n                           android:padding=\\"14dp\\" android:background=\\"@drawable/aether_card\\">", 1)
+              menu_layout.write_text(dashboard)
+
           # Make the four system cards readable on narrow Android phone screens.
           if menu_layout.exists():
               dashboard = menu_layout.read_text()
@@ -470,6 +490,85 @@ jobs:
           menu_java = Path("amethyst/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/fragments/MainMenuFragment.java")
           if menu_java.exists():
               j = menu_java.read_text()
+              imports = [
+                  ("import android.content.Intent;", "import android.content.Intent;\nimport android.net.Uri;\nimport android.graphics.BitmapFactory;"),
+                  ("import androidx.annotation.Nullable;", "import androidx.annotation.Nullable;\nimport androidx.activity.result.ActivityResultLauncher;\nimport androidx.activity.result.contract.ActivityResultContracts;"),
+                  ("import java.io.File;", "import java.io.File;\nimport java.io.FileOutputStream;\nimport java.io.InputStream;"),
+              ]
+              for old, new in imports:
+                  if old in j and new not in j:
+                      j = j.replace(old, new, 1)
+              if "private final ActivityResultLauncher<String[]> aetherSkinPicker" not in j:
+                  j = j.replace("    private mcVersionSpinner mVersionSpinner;", """    private mcVersionSpinner mVersionSpinner;
+              private final ActivityResultLauncher<String[]> aetherSkinPicker =
+                      registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::importAetherSkin);""", 1)
+              if "aether_skin_button" not in j:
+                  j = j.replace("        mVersionSpinner = view.findViewById(R.id.mc_version_spinner);", """        mVersionSpinner = view.findViewById(R.id.mc_version_spinner);
+              Button skinButton = view.findViewById(R.id.aether_skin_button);
+              skinButton.setOnClickListener(v -> {
+                  net.kdt.pojavlaunch.value.MinecraftAccount account =
+                          ((net.kdt.pojavlaunch.LauncherActivity) requireActivity()).getAetherSelectedAccount();
+                  if (account == null || !account.isLocal()) {
+                      Toast.makeText(requireContext(), "Pilih akun Offline terlebih dahulu", Toast.LENGTH_LONG).show();
+                      return;
+                  }
+                  new AlertDialog.Builder(requireContext())
+                          .setTitle("Skin Offline")
+                          .setMessage("Pilih file skin PNG 64x64 atau 64x32. Agar skin tampil di dalam game, pasang mod CustomSkinLoader pada profil Minecraft ini. Skin lokal hanya terlihat di perangkat/pemain yang memakai mod tersebut.")
+                          .setPositiveButton("PILIH SKIN", (dialog, which) -> aetherSkinPicker.launch(new String[]{"image/png"}))
+                          .setNegativeButton("BATAL", null)
+                          .show();
+              });""", 1)
+              if "private void importAetherSkin(Uri uri)" not in j:
+                  closing = j.rfind("}")
+                  methods = """
+              private void importAetherSkin(Uri uri) {
+                  if (uri == null) return;
+                  try {
+                      net.kdt.pojavlaunch.value.MinecraftAccount account =
+                              ((net.kdt.pojavlaunch.LauncherActivity) requireActivity()).getAetherSelectedAccount();
+                      if (account == null || !account.isLocal()) {
+                          Toast.makeText(requireContext(), "Akun Offline tidak ditemukan", Toast.LENGTH_LONG).show();
+                          return;
+                      }
+                      String username = account.username;
+                      if (username == null || !username.matches("[A-Za-z0-9_]{1,16}")) {
+                          Toast.makeText(requireContext(), "Nama akun tidak valid untuk nama file skin", Toast.LENGTH_LONG).show();
+                          return;
+                      }
+                      BitmapFactory.Options bounds = new BitmapFactory.Options();
+                      bounds.inJustDecodeBounds = true;
+                      try (InputStream check = requireContext().getContentResolver().openInputStream(uri)) {
+                          BitmapFactory.decodeStream(check, null, bounds);
+                      }
+                      if (bounds.outWidth != 64 || (bounds.outHeight != 64 && bounds.outHeight != 32)) {
+                          Toast.makeText(requireContext(), "Ukuran skin harus 64x64 atau 64x32 PNG", Toast.LENGTH_LONG).show();
+                          return;
+                      }
+                      File skinDir = new File(getCurrentProfileDirectory(),
+                              "CustomSkinLoader/LocalSkin/skins");
+                      if (!skinDir.exists() && !skinDir.mkdirs()) {
+                          Toast.makeText(requireContext(), "Folder skin gagal dibuat", Toast.LENGTH_LONG).show();
+                          return;
+                      }
+                      File target = new File(skinDir, username + ".png");
+                      try (InputStream input = requireContext().getContentResolver().openInputStream(uri);
+                           FileOutputStream output = new FileOutputStream(target)) {
+                          byte[] buffer = new byte[8192];
+                          int count;
+                          while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
+                          output.flush();
+                      }
+                      Toast.makeText(requireContext(), "Skin tersimpan untuk " + username +
+                              ". Pasang CustomSkinLoader lalu masuk ulang ke dunia.", Toast.LENGTH_LONG).show();
+                  } catch (Exception error) {
+                      Tools.showError(requireContext(), "Gagal mengimpor skin", error);
+                  }
+              }
+
+              """
+                  j = j[:closing] + methods + j[closing:]
+              menu_java.write_text(j)
               anchor = '        mVersionSpinner = view.findViewById(R.id.mc_version_spinner);'
               status = "\n".join([
                   '        android.widget.TextView heapInfo = view.findViewById(R.id.aether_ram_value);',
@@ -519,6 +618,12 @@ jobs:
           launcher_java = Path("amethyst/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/LauncherActivity.java")
           if launcher_java.exists():
               j = launcher_java.read_text()
+              if "getAetherSelectedAccount()" not in j:
+                  j = j.replace("    private mcAccountSpinner mAccountSpinner;", """    private mcAccountSpinner mAccountSpinner;
+
+              public net.kdt.pojavlaunch.value.MinecraftAccount getAetherSelectedAccount() {
+                  return mAccountSpinner == null ? null : mAccountSpinner.getSelectedAccount();
+              }""", 1)
               anchor = '        mSettingsButton.setOnClickListener(mSettingButtonListener);'
               wiring = anchor + """
                   findViewById(R.id.aether_nav_home).setOnClickListener(v -> Tools.backToMainMenu(this));

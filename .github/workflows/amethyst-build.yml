@@ -45,9 +45,19 @@ jobs:
 
           # Create the Aether backgrounds referenced by the patched layouts/theme.
           (drawable / "aether_wallpaper.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
-          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-              <gradient android:angle="135" android:startColor="#101B2B" android:centerColor="#17263B" android:endColor="#0B1420" />
-          </shape>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="360dp" android:height="800dp"
+              android:viewportWidth="360" android:viewportHeight="800">
+              <path android:fillColor="#0B1420" android:pathData="M0,0h360v800h-360z" />
+              <path android:fillColor="#14263A" android:pathData="M0,0h360v800h-360z" />
+              <path android:fillColor="#203A50" android:pathData="M0,500 L52,438 L94,470 L154,390 L210,455 L270,372 L360,450 L360,800 L0,800z" />
+              <path android:fillColor="#172F43" android:pathData="M0,575 L66,520 L122,548 L188,475 L244,535 L310,480 L360,520 L360,800 L0,800z" />
+              <path android:fillColor="#102638" android:pathData="M0,650 L74,590 L132,630 L202,560 L270,615 L330,570 L360,590 L360,800 L0,800z" />
+              <path android:fillColor="#0A1D2B" android:pathData="M0,720 L80,660 L142,700 L220,635 L286,690 L360,650 L360,800 L0,800z" />
+              <path android:fillColor="#54D5E2" android:pathData="M270,92a28,28 0,1 0,56 0a28,28 0,1 0,-56 0" />
+              <path android:fillColor="#D7F8FA" android:pathData="M44,92h4v4h-4z M112,154h3v3h-3z M210,76h4v4h-4z M320,210h3v3h-3z M72,270h3v3h-3z M250,310h4v4h-4z M166,210h3v3h-3z" />
+              <path android:fillColor="#0A1B29" android:pathData="M42,650h18v-44h-18z M34,615h34v-20h-34z M38,585h26v-18h-26z M292,632h18v-46h-18z M284,596h34v-20h-34z M288,566h26v-18h-26z" />
+          </vector>
           """)
           (drawable / "aether_card.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">

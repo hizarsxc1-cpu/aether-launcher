@@ -513,7 +513,7 @@ jobs:
                           </LinearLayout>
                       </LinearLayout>"""
               dashboard, changed = re.subn(
-                  r'<LinearLayout\s+android:id="@\+id/aether_status_row"[\s\S]*?</LinearLayout>',
+                  r'<LinearLayout\s+android:id="@\+id/aether_status_row"[\s\S]*?</LinearLayout>(?=\s*</LinearLayout>\s*<TextView[\s\S]*?android:text="QUICK ACCESS")',
                   lambda _match: status_grid,
                   dashboard,
                   count=1

@@ -81,7 +81,7 @@ jobs:
           if styles.exists():
               t = styles.read_text()
               anchor = '<item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>'
-              additions = anchor + '\\n        <item name="colorAccent">#12AFC0</item>\\n        <item name="colorControlActivated">#12AFC0</item>\\n        <item name="android:colorAccent">#12AFC0</item>'
+              additions = anchor + '\n        <item name="colorAccent">#12AFC0</item>\n        <item name="colorControlActivated">#12AFC0</item>\n        <item name="android:colorAccent">#12AFC0</item>'
               if 'name="colorAccent"' not in t:
                   t = t.replace(anchor, additions)
               styles.write_text(t)
@@ -91,7 +91,7 @@ jobs:
           if activity_layout.exists():
               t = activity_layout.read_text()
               t = t.replace('android:background="@android:color/transparent"', 'android:background="@drawable/aether_wallpaper"', 1)
-              t = t.replace('android:dropDownVerticalOffset="@dimen/_52sdp"', 'android:dropDownVerticalOffset="@dimen/_52sdp"\\n        android:background="@drawable/aether_card"', 1)
+              t = t.replace('android:dropDownVerticalOffset="@dimen/_52sdp"', 'android:dropDownVerticalOffset="@dimen/_52sdp"\n        android:background="@drawable/aether_card"', 1)
               t = t.replace('android:background="?attr/selectableItemBackground"', 'android:background="@drawable/aether_card"', 1)
               activity_layout.write_text(t)
 

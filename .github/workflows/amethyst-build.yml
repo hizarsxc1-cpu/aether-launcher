@@ -107,7 +107,7 @@ jobs:
                       if attr in view:
                           view = re.sub(re.escape(attr) + r'="[^"]*"', attr + '="' + value + '"', view, count=1)
                       else:
-                          view = view[:-1] + '\n        ' + attr + '="' + value + '" />'
+                          view = view[:-2] + '\n        ' + attr + '="' + value + '" />'
                   return xml[:match.start()] + view + xml[match.end():]
 
               t = patch_view(t, "com.kdt.mcgui.mcAccountSpinner", "account_spinner", "0dp", {

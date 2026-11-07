@@ -411,6 +411,8 @@ jobs:
               t = t.replace('app:layout_constraintTop_toTopOf="parent" />', 'app:layout_constraintStart_toEndOf="@id/aether_nav_rail"\n        app:layout_constraintEnd_toStartOf="@id/setting_button"\n        app:layout_constraintTop_toTopOf="parent" />', 1)
               t = t.replace('app:layout_constraintBottom_toTopOf="@+id/progress_layout"\n        app:layout_constraintTop_toBottomOf="@+id/account_spinner" />', 'app:layout_constraintStart_toEndOf="@id/aether_nav_rail"\n        app:layout_constraintEnd_toEndOf="parent"\n        app:layout_constraintBottom_toTopOf="@+id/progress_layout"\n        app:layout_constraintTop_toBottomOf="@+id/account_spinner" />', 1)
               t = t.replace('app:layout_constraintBottom_toBottomOf="parent" />', 'app:layout_constraintStart_toEndOf="@id/aether_nav_rail"\n        app:layout_constraintEnd_toEndOf="parent"\n        app:layout_constraintBottom_toBottomOf="parent" />', 1)
+              t = t.replace('android:id="@+id/container_fragment"\\n\\n        android:layout_width="match_parent"', 'android:id="@+id/container_fragment"\\n\\n        android:layout_width="0dp"', 1)
+              t = t.replace('android:id="@+id/progress_layout"\\n    android:layout_width="match_parent"', 'android:id="@+id/progress_layout"\\n    android:layout_width="0dp"', 1)
               rail = """<LinearLayout
                   android:id="@+id/aether_nav_rail"
                   android:layout_width="68dp"

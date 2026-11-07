@@ -411,7 +411,7 @@ jobs:
                           android:textColor="#FFFFFF"
                           android:background="@drawable/aether_card"/>"""
               if "aether_skin_button" not in dashboard:
-                  dashboard = dashboard.replace(anchor_skin, anchor_skin.replace("</LinearLayout>", "</LinearLayout>" + skin_button + cape_button, 1), 1)
+              dashboard = dashboard.replace(anchor_skin, skin_button + "\\n" + anchor_skin, 1)
               elif "aether_cape_button" not in dashboard:
                   dashboard = dashboard.replace("</ScrollView>", cape_button + "\n              </ScrollView>", 1)
               menu_layout.write_text(dashboard)

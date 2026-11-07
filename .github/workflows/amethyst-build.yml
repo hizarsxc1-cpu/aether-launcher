@@ -166,8 +166,8 @@ jobs:
                   '        android.widget.TextView heapInfo = view.findViewById(R.id.aether_ram_value);',
                   '        android.widget.TextView javaInfo = view.findViewById(R.id.aether_java_value);',
                   '        android.widget.TextView rendererInfo = view.findViewById(R.id.aether_renderer_value);',
-                  '        long heapMb = Runtime.getRuntime().maxMemory() / (1024L * 1024L);',
-                  '        heapInfo.setText("HEAP\\n" + heapMb + " MB");',
+                  '        int ramMb = LauncherPreferences.PREF_RAM_ALLOCATION;',
+                  '        heapInfo.setText("RAM\\n" + ramMb + " MB");',
                   '        javaInfo.setText("JAVA\\n" + System.getProperty("java.version", "Unknown"));',
                   '        rendererInfo.setText("RENDERER\\nConfigure in Settings");'])
               if "aether_ram_value" not in j:

@@ -158,6 +158,10 @@ jobs:
                       android:layout_height="64dp" android:gravity="center" android:text="⚙&#10;Settings"
                       android:textSize="11sp" android:textColor="#C3D2E5" android:clickable="true"
                       android:focusable="true" android:background="?attr/selectableItemBackground"/>
+                  <TextView android:id="@+id/aether_nav_about" android:layout_width="match_parent"
+                      android:layout_height="64dp" android:gravity="center" android:text="ⓘ&#10;About"
+                      android:textSize="11sp" android:textColor="#C3D2E5" android:clickable="true"
+                      android:focusable="true" android:background="?attr/selectableItemBackground"/>
               </LinearLayout>
               """
               t = t.replace('<com.kdt.mcgui.mcAccountSpinner', rail + '\n    <com.kdt.mcgui.mcAccountSpinner', 1)
@@ -410,7 +414,7 @@ jobs:
           """
               if "aether_performance_mode" not in v:
                   v = v.replace('    <PreferenceCategory android:title="@string/preference_category_video" >',
-                                '    <PreferenceCategory android:title="@string/preference_category_video" >\\n' + pref, 1)
+                                '    <PreferenceCategory android:title="@string/preference_category_video" >\n' + pref, 1)
                   video_prefs.write_text(v)
 
           prefs_java = Path("amethyst/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/prefs/LauncherPreferences.java")
@@ -468,7 +472,13 @@ jobs:
                   });
                   findViewById(R.id.aether_nav_controls).setOnClickListener(v ->
                           startActivity(new android.content.Intent(this, CustomControlsActivity.class)));
-                  findViewById(R.id.aether_nav_mods).setOnClickListener(v -> Tools.installMod(this, false));"""
+                  findViewById(R.id.aether_nav_mods).setOnClickListener(v -> Tools.installMod(this, false));
+                  findViewById(R.id.aether_nav_about).setOnClickListener(v ->
+                      new androidx.appcompat.app.AlertDialog.Builder(this)
+                          .setTitle("Aether Launcher")
+                          .setMessage("Minecraft Java Edition for Android\\nPowered by the Amethyst engine\\n\\nOpen-source project")
+                          .setPositiveButton(android.R.string.ok, null)
+                          .show());"""
               if 'aether_nav_home' not in j:
                   j = j.replace(anchor, wiring, 1)
               launcher_java.write_text(j)

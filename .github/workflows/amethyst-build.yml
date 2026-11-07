@@ -452,16 +452,16 @@ jobs:
           if menu_java.exists():
               j = menu_java.read_text()
               anchor = '        mVersionSpinner = view.findViewById(R.id.mc_version_spinner);'
-              status = "\\n".join([
+              status = "\n".join([
                   '        android.widget.TextView heapInfo = view.findViewById(R.id.aether_ram_value);',
                   '        android.widget.TextView javaInfo = view.findViewById(R.id.aether_java_value);',
                   '        android.widget.TextView rendererInfo = view.findViewById(R.id.aether_renderer_value);',
                   '        long heapMb = Runtime.getRuntime().maxMemory() / (1024L * 1024L);',
-                  '        heapInfo.setText("HEAP\\\\n" + heapMb + " MB");',
-                  '        javaInfo.setText("JAVA\\\\n" + System.getProperty("java.version", "Unknown"));',
-                  '        rendererInfo.setText("RENDERER\\\\nConfigure in Settings");'])
+                  '        heapInfo.setText("HEAP\\n" + heapMb + " MB");',
+                  '        javaInfo.setText("JAVA\\n" + System.getProperty("java.version", "Unknown"));',
+                  '        rendererInfo.setText("RENDERER\\nConfigure in Settings");'])
               if "aether_ram_value" not in j:
-                  j = j.replace(anchor, anchor + "\\n" + status, 1)
+                  j = j.replace(anchor, anchor + "\n" + status, 1)
               menu_java.write_text(j)
 
           launcher_java = Path("amethyst/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/LauncherActivity.java")

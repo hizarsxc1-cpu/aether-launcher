@@ -22,6 +22,11 @@ jobs:
         with:
           packages: "platform-tools"
 
+      - name: Fix Git SSH URLs
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+
       - name: Download Amethyst Source
         run: |
           git clone --branch v3_openjdk --recursive https://github.com/AngelAuraMC/Amethyst-Android.git amethyst

@@ -116,6 +116,10 @@ jobs:
                       android:gravity="center" android:text="⌂&#10;Home" android:textSize="11sp"
                       android:textColor="#65D8E5" android:clickable="true" android:focusable="true"
                       android:background="?attr/selectableItemBackground"/>
+                  <TextView android:id="@+id/aether_nav_versions" android:layout_width="match_parent"
+                      android:layout_height="64dp" android:gravity="center" android:text="▣&#10;Versions"
+                      android:textSize="11sp" android:textColor="#C3D2E5" android:clickable="true"
+                      android:focusable="true" android:background="?attr/selectableItemBackground"/>
                   <TextView android:id="@+id/aether_nav_mods" android:layout_width="match_parent"
                       android:layout_height="64dp" android:gravity="center" android:text="▧&#10;Mods"
                       android:textSize="11sp" android:textColor="#C3D2E5" android:clickable="true"
@@ -172,6 +176,14 @@ jobs:
                   '        rendererInfo.setText("RENDERER\\nConfigure in Settings");'])
               if "aether_ram_value" not in j:
                   j = j.replace(anchor, anchor + "\n" + status, 1)
+              if "openAetherVersionEditor" not in j:
+                  closing = j.rfind("}")
+                  method = "\n".join([
+                      "    public void openAetherVersionEditor() {",
+                      "        if (mVersionSpinner != null) mVersionSpinner.openProfileEditor(requireActivity());",
+                      "    }",
+                  ])
+                  j = j[:closing] + method + "\n" + j[closing:]
               menu_java.write_text(j)
 
           launcher_java = Path("amethyst/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/LauncherActivity.java")
@@ -181,6 +193,11 @@ jobs:
               wiring = anchor + """
                   findViewById(R.id.aether_nav_home).setOnClickListener(v -> Tools.backToMainMenu(this));
                   findViewById(R.id.aether_nav_settings).setOnClickListener(mSettingButtonListener);
+                  findViewById(R.id.aether_nav_versions).setOnClickListener(v -> {
+                      Fragment current = getSupportFragmentManager().findFragmentById(mFragmentView.getId());
+                      if (current instanceof MainMenuFragment) ((MainMenuFragment) current).openAetherVersionEditor();
+                      else Tools.backToMainMenu(this);
+                  });
                   findViewById(R.id.aether_nav_controls).setOnClickListener(v ->
                           startActivity(new android.content.Intent(this, CustomControlsActivity.class)));
                   findViewById(R.id.aether_nav_mods).setOnClickListener(v -> Tools.installMod(this, false));"""

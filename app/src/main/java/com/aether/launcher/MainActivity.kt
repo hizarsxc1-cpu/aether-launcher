@@ -1,4 +1,3 @@
-
 package com.aether.launcher
 
 import android.os.Bundle
@@ -25,7 +24,9 @@ import androidx.compose.ui.unit.sp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { AetherApp() }
+        setContent {
+            AetherApp()
+        }
     }
 }
 
@@ -87,7 +88,10 @@ fun AetherApp() {
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
-                            .clickable { page = "settings" }
+                            .clickable {
+                                page = "settings"
+                                message = ""
+                            }
                             .padding(10.dp)
                     )
                 }
@@ -99,7 +103,8 @@ fun AetherApp() {
                         version = version,
                         ram = ram,
                         onPlay = {
-                            message = "Minecraft belum terhubung. Fitur Play akan dikembangkan berikutnya."
+                            message =
+                                "Minecraft belum terhubung. Fitur Play akan dikembangkan berikutnya."
                         }
                     )
 
@@ -125,15 +130,17 @@ fun AetherApp() {
                         .padding(5.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    NavItem("⌂  HOME", page == "home") {
+                    NavItem("⌂ HOME", page == "home") {
                         page = "home"
                         message = ""
                     }
-                    NavItem("⚙  SETTINGS", page == "settings") {
+
+                    NavItem("⚙ SETTINGS", page == "settings") {
                         page = "settings"
                         message = ""
                     }
-                    NavItem("♙  ACCOUNT", page == "account") {
+
+                    NavItem("♙ ACCOUNT", page == "account") {
                         page = "account"
                         message = ""
                     }
@@ -155,7 +162,7 @@ fun AetherApp() {
 }
 
 @Composable
-fun HomePage(
+fun ColumnScope.HomePage(
     version: String,
     ram: String,
     onPlay: () -> Unit
@@ -189,7 +196,11 @@ fun HomePage(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Panel, RoundedCornerShape(20.dp))
-                .border(1.dp, Color(0x668BD9E8), RoundedCornerShape(20.dp))
+                .border(
+                    1.dp,
+                    Color(0x668BD9E8),
+                    RoundedCornerShape(20.dp)
+                )
                 .padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -231,7 +242,7 @@ fun HomePage(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    "▶  PLAY NOW",
+                    "▶ PLAY NOW",
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 2.sp
                 )
@@ -250,7 +261,7 @@ fun HomePage(
 }
 
 @Composable
-fun SettingsPage(
+fun ColumnScope.SettingsPage(
     ram: String,
     version: String,
     onRamChange: (String) -> Unit,
@@ -279,7 +290,12 @@ fun SettingsPage(
 
         SectionTitle("MEMORY ALLOCATION")
 
-        listOf("1024 MB", "2048 MB", "3072 MB", "4096 MB").forEach {
+        listOf(
+            "1024 MB",
+            "2048 MB",
+            "3072 MB",
+            "4096 MB"
+        ).forEach {
             ChoiceItem(
                 title = it,
                 selected = ram == it
@@ -292,7 +308,12 @@ fun SettingsPage(
 
         SectionTitle("MINECRAFT VERSION")
 
-        listOf("1.21.10", "1.21.8", "1.20.1", "1.19.4").forEach {
+        listOf(
+            "1.21.10",
+            "1.21.8",
+            "1.20.1",
+            "1.19.4"
+        ).forEach {
             ChoiceItem(
                 title = it,
                 selected = version == it
@@ -312,7 +333,7 @@ fun SettingsPage(
 }
 
 @Composable
-fun AccountPage(
+fun ColumnScope.AccountPage(
     name: String,
     onNameChange: (String) -> Unit
 ) {
@@ -333,7 +354,11 @@ fun AccountPage(
 
         Spacer(Modifier.height(20.dp))
 
-        Text("♙", color = Cyan, fontSize = 60.sp)
+        Text(
+            "♙",
+            color = Cyan,
+            fontSize = 60.sp
+        )
 
         Text(
             "Player Name",
@@ -347,7 +372,9 @@ fun AccountPage(
             value = name,
             onValueChange = onNameChange,
             singleLine = true,
-            label = { Text("Username") },
+            label = {
+                Text("Username")
+            },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
@@ -361,7 +388,7 @@ fun AccountPage(
         Spacer(Modifier.height(12.dp))
 
         Text(
-            "Local profile only • Microsoft login belum tersedia",
+            "Local profile only - Microsoft login belum tersedia",
             color = Color.LightGray,
             fontSize = 10.sp,
             textAlign = TextAlign.Center
@@ -378,6 +405,7 @@ fun SectionTitle(title: String) {
         fontWeight = FontWeight.Bold,
         letterSpacing = 2.sp
     )
+
     Spacer(Modifier.height(8.dp))
 }
 
@@ -400,7 +428,9 @@ fun ChoiceItem(
                 if (selected) Cyan else Color.Transparent,
                 RoundedCornerShape(10.dp)
             )
-            .clickable { onClick() }
+            .clickable {
+                onClick()
+            }
             .padding(15.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -431,7 +461,9 @@ fun NavItem(
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier
-            .clickable { onClick() }
+            .clickable {
+                onClick()
+            }
             .padding(horizontal = 8.dp, vertical = 12.dp)
     )
 }

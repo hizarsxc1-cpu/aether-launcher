@@ -388,7 +388,7 @@ jobs:
           
           # Add working skin/cape buttons inside the dashboard feature card.
           if menu_layout.exists():
-              dashboard = menu_layout.read_text()
+              dashboard = menu_layout.read_text().lstrip()
               skin_button = """<Button
                               android:id="@+id/aether_skin_button"
                               android:layout_width="match_parent"
@@ -421,7 +421,7 @@ jobs:
 
           # Make the four system cards readable on narrow Android phone screens.
           if menu_layout.exists():
-              dashboard = menu_layout.read_text()
+              dashboard = menu_layout.read_text().lstrip()
               status_grid = """<LinearLayout
                           android:id="@+id/aether_status_row"
                           android:layout_width="match_parent"

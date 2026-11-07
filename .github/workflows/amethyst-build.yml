@@ -411,9 +411,9 @@ jobs:
                           android:textColor="#FFFFFF"
                           android:background="@drawable/aether_card"/>"""
               if "aether_skin_button" not in dashboard:
-                  dashboard = dashboard.replace(anchor_skin, skin_button + "\\n" + cape_button + "\\n" + anchor_skin, 1)
+                  dashboard = dashboard.replace(anchor_skin, skin_button + "\n" + cape_button + "\n" + anchor_skin, 1)
               elif "aether_cape_button" not in dashboard:
-                  dashboard = dashboard.replace(skin_button, skin_button + "\\n" + cape_button, 1)
+                  dashboard = dashboard.replace(skin_button, skin_button + "\n" + cape_button, 1)
               menu_layout.write_text(dashboard)
 
           # Make the four system cards readable on narrow Android phone screens.

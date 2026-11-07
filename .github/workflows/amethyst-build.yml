@@ -25,7 +25,7 @@ jobs:
       - name: Fix Git SSH URLs
         run: |
           git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
 
       - name: Download Amethyst Engine
         run: |

@@ -483,6 +483,36 @@ jobs:
                   v = v.replace('    <PreferenceCategory android:title="@string/preference_category_video" >',
                                 '    <PreferenceCategory android:title="@string/preference_category_video" >\n' + pref, 1)
                   video_prefs.write_text(v)
+              preset_pref = """        <ListPreference
+                  android:key="aether_performance_preset"
+                  android:defaultValue="off"
+                  android:title="Aether FPS Preset"
+                  android:summary="Choose a lightweight rendering preset for low-end devices"
+                  android:entries="@array/aether_performance_entries"
+                  android:entryValues="@array/aether_performance_values" />
+          """
+              if "aether_performance_preset" not in v:
+                  v = v.replace("    </PreferenceCategory>", preset_pref + "    </PreferenceCategory>", 1)
+                  video_prefs.write_text(v)
+
+              perf_values = res / "values/aether_performance.xml"
+              if not perf_values.exists():
+                  perf_values.write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string-array name="aether_performance_entries">
+                  <item>Off (default)</item>
+                  <item>Balanced</item>
+                  <item>Low</item>
+                  <item>Ultra Low</item>
+              </string-array>
+              <string-array name="aether_performance_values">
+                  <item>off</item>
+                  <item>balanced</item>
+                  <item>low</item>
+                  <item>ultra_low</item>
+              </string-array>
+          </resources>
+          """)
 
           prefs_java = Path("amethyst/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/prefs/LauncherPreferences.java")
           if prefs_java.exists():
@@ -498,6 +528,29 @@ jobs:
                   }"""
               if "Aether's opt-in low-end preset" not in q:
                   q = q.replace(anchor, preset, 1)
+                  prefs_java.write_text(q)
+              preset_logic = """
+                  // Aether presets use the engine's existing render-scale and VSync controls.
+                  String aetherPreset = DEFAULT_PREF.getString("aether_performance_preset", "off");
+                  if ("balanced".equals(aetherPreset)) {
+                      PREF_SCALE_FACTOR = Math.min(PREF_SCALE_FACTOR, 0.80f);
+                      PREF_FORCE_VSYNC = false;
+                      PREF_VSYNC_IN_ZINK = false;
+                      PREF_SUSTAINED_PERFORMANCE = true;
+                  } else if ("low".equals(aetherPreset)) {
+                      PREF_SCALE_FACTOR = Math.min(PREF_SCALE_FACTOR, 0.65f);
+                      PREF_FORCE_VSYNC = false;
+                      PREF_VSYNC_IN_ZINK = false;
+                      PREF_SUSTAINED_PERFORMANCE = true;
+                  } else if ("ultra_low".equals(aetherPreset)) {
+                      PREF_SCALE_FACTOR = Math.min(PREF_SCALE_FACTOR, 0.50f);
+                      PREF_FORCE_VSYNC = false;
+                      PREF_VSYNC_IN_ZINK = false;
+                      PREF_SUSTAINED_PERFORMANCE = true;
+                  }
+          """
+              if "Aether presets use the engine's existing render-scale" not in q:
+                  q = q.replace(preset, preset + preset_logic, 1)
                   prefs_java.write_text(q)
 
           menu_java = Path("amethyst/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/fragments/MainMenuFragment.java")

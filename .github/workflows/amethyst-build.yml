@@ -309,7 +309,7 @@ jobs:
                               android:layout_width="0dp"
                               android:layout_height="54dp"
                               android:layout_weight="1"
-                              android:text="News & Wiki"
+                              android:text="News &amp; Wiki"
                               android:textColor="#F4FAFC"
                               android:background="@drawable/aether_card" />
                           <Button

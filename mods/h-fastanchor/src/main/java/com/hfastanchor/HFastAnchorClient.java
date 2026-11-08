@@ -22,11 +22,12 @@ import org.lwjgl.glfw.GLFW;
 
 public final class HFastAnchorClient implements ClientModInitializer {
     private static KeyBinding comboKey;
-    private enum Stage { IDLE, WAIT_ANCHOR, WAIT_CHARGE, WAIT_DETONATE }
+    private enum Stage { IDLE, WAIT_ANCHOR, WAIT_CHARGE, WAIT_DETONATE, WAIT_CONFIRM }
     private static Stage stage = Stage.IDLE;
     private static BlockPos anchorPos;
     private static int anchorSlot = -1, glowstoneSlot = -1, totemSlot = -1;
     private static int ticks;
+    private static int detonateAttempts;
 
     @Override
     public void onInitializeClient() {
@@ -54,9 +55,10 @@ public final class HFastAnchorClient implements ClientModInitializer {
         }
 
         BlockState state = client.world.getBlockState(anchorPos);
+        boolean anchorStillThere = state.isOf(net.minecraft.block.Blocks.RESPAWN_ANCHOR);
         switch (stage) {
             case WAIT_ANCHOR -> {
-                if (state.isOf(net.minecraft.block.Blocks.RESPAWN_ANCHOR)) {
+                if (anchorStillThere) {
                     select(client, glowstoneSlot);
                     interactAtAnchor(client);
                     stage = Stage.WAIT_CHARGE;
@@ -64,17 +66,35 @@ public final class HFastAnchorClient implements ClientModInitializer {
                 }
             }
             case WAIT_CHARGE -> {
-                if (state.isOf(net.minecraft.block.Blocks.RESPAWN_ANCHOR)
-                        && state.get(RespawnAnchorBlock.CHARGES) > 0) {
+                if (anchorStillThere && state.get(RespawnAnchorBlock.CHARGES) > 0) {
                     select(client, totemSlot);
                     stage = Stage.WAIT_DETONATE;
                     ticks = 0;
+                    detonateAttempts = 0;
                 }
             }
             case WAIT_DETONATE -> {
-                if (ticks >= 1) {
+                if (!anchorStillThere) {
+                    message(client, "Anchor berhasil meledak!");
+                    reset();
+                } else if (state.get(RespawnAnchorBlock.CHARGES) > 0 && ticks >= 3) {
+                    // Re-select immediately before each attempt so the main hand is the Totem.
+                    select(client, totemSlot);
                     interactAtAnchor(client);
-                    message(client, "Interaksi detonasi dikirim. Pastikan berada di dimensi tempat Anchor meledak.");
+                    detonateAttempts++;
+                    ticks = 0;
+                    if (detonateAttempts >= 3) {
+                        stage = Stage.WAIT_CONFIRM;
+                        ticks = 0;
+                    }
+                }
+            }
+            case WAIT_CONFIRM -> {
+                if (!anchorStillThere) {
+                    message(client, "Anchor berhasil meledak!");
+                    reset();
+                } else if (ticks >= 10) {
+                    message(client, "Detonasi tidak terkonfirmasi. Cek dimensi, ping, atau proteksi server.");
                     reset();
                 }
             }
@@ -141,5 +161,6 @@ public final class HFastAnchorClient implements ClientModInitializer {
         anchorPos = null;
         anchorSlot = glowstoneSlot = totemSlot = -1;
         ticks = 0;
+        detonateAttempts = 0;
     }
 }

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "hfastanchor",
+  "version": "${version}",
+  "name": "H FastAnchor",
+  "description": "Hotbar-aware Respawn Anchor combo helper for Minecraft 1.21.",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.hfastanchor.HFastAnchorClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "minecraft": "1.21",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

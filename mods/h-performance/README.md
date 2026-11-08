@@ -14,3 +14,6 @@ A small client-side low-render-load profile intended for PojavLauncher and lower
 - Entity shadows: Off
 
 The previous values are saved when enabling the profile and restored when disabling it. This is a settings profile, not a hardware overclock; actual FPS depends on device temperature, renderer, RAM, world, and server load. It does not alter server behavior.
+
+
+Build trigger marker: project files are ready for the first CI build.

@@ -144,25 +144,28 @@ public final class HFastAnchorClient implements ClientModInitializer {
     private static void equipTotemIfAvailableOrSword(MinecraftClient client) {
         PlayerInventory inv = client.player.getInventory();
 
-        // Prefer a Totem already in hotbar, otherwise swap one from inventory to offhand.
-        for (int i = 0; i < 9; i++) {
-            if (inv.getStack(i).isOf(Items.TOTEM_OF_UNDYING)) {
-                select(client, i);
-                message(client, "Totem ditemukan di hotbar.");
-                return;
-            }
-        }
-
+        // Keep an existing offhand Totem; otherwise swap one from hotbar or inventory.
         if (inv.offHand.get(0).isOf(Items.TOTEM_OF_UNDYING)) {
             select(client, SWORD_SLOT);
-            message(client, "Totem ditemukan di offhand.");
+            message(client, "Totem sudah siap di offhand.");
+            return;
+        }
+
+        for (int i = 0; i < 9; i++) {
+            if (!inv.getStack(i).isOf(Items.TOTEM_OF_UNDYING)) continue;
+            // PlayerScreenHandler hotbar slots are 36..44; SWAP button 40 targets offhand.
+            client.interactionManager.clickSlot(
+                    client.player.currentScreenHandler.syncId, 36 + i, 40,
+                    SlotActionType.SWAP, client.player);
+            select(client, SWORD_SLOT);
+            message(client, "Totem dari hotbar dipindahkan ke offhand.");
             return;
         }
 
         for (int i = 9; i < 36; i++) {
             ItemStack stack = inv.getStack(i);
             if (!stack.isOf(Items.TOTEM_OF_UNDYING)) continue;
-            // PlayerScreenHandler: main inventory slots are 9..35; button 40 swaps offhand.
+            // PlayerScreenHandler main inventory slots are 9..35; button 40 swaps offhand.
             client.interactionManager.clickSlot(
                     client.player.currentScreenHandler.syncId, i, 40,
                     SlotActionType.SWAP, client.player);

@@ -1,14 +1,24 @@
-# H FastAnchor (Fabric 1.21)
+# AETHER Touch Macro (Fabric 1.21.0)
 
-Standalone client mod project nested under `mods/h-fastanchor` so it does not alter Aether Launcher app sources.
+Standalone Fabric client mod inside the existing Aether Launcher repository.
 
-Default key: **V**. Finds Respawn Anchor, Glowstone and Totem in any of the 9 hotbar slots, places an Anchor on the block face under the crosshair, uses Glowstone once, selects Totem, then sends the final Anchor interaction. Offhand and inventory arrangement are left unchanged.
+## Touch buttons
+- Z = Anchor Macro: slot 9 Respawn Anchor -> slot 8 Glowstone -> Totem if available -> activate charged Anchor.
+- X = Crystal Macro: slot 2 Obsidian -> slot 3 End Crystal.
+- Anchor uses Sword slot 1 if no Totem is available. The absence of a Totem never cancels the detonation attempt.
+- Totem can be in hotbar, offhand, or main inventory. A Totem found in main inventory is swapped into offhand.
+- No artificial fixed delay is inserted between actions. Anchor placement and charging still wait for the actual client/server block-state confirmation, which is required for reliable sequencing.
 
-## Build
-Requires Java 21 and Gradle 8.8:
-`gradle build`
+## Pojav touchscreen setup
+Open Pojav side menu -> Custom controls -> gear:
+1. Add button ANCHOR and map it to Z.
+2. Add button CRYSTAL and map it to X.
+3. Place and resize the buttons, then save.
 
-The output JAR is in `build/libs/`.
+## Hotbar layout
+1 Sword | 2 Obsidian | 3 End Crystal | 8 Glowstone | 9 Respawn Anchor.
 
-## Prototype warning
-This is an experimental client-side sequence, not a verified release. Server latency, dimension rules, block placement geometry, interaction range and server policies affect the result. It does not bypass anti-cheat; some servers may prohibit automated interactions. Test in a private world first.
+## Notes
+Anchor explosion depends on dimension rules: in the Nether, Respawn Anchors are valid respawn blocks and do not explode. Server latency, protection plugins, anti-cheat, placement space, and server rules can still reject a macro interaction. Test in single-player first and use only where server rules permit macros. Crystal destruction remains manual.
+
+Build with Java 21 and Gradle 8.8 from this directory. The existing workflow in .github/workflows/h-fastanchor.yml builds the JAR on branch h-fastanchor-mod.

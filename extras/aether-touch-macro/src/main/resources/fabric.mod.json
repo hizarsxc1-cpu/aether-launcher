@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "aether_touch_macro",
+  "version": "${version}",
+  "name": "AETHER Touch Macro",
+  "description": "Touch-triggered Anchor and Crystal placement sequences for Minecraft 1.21.0.",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.aether.touchmacro.AetherTouchMacroClient"] },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "1.21",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

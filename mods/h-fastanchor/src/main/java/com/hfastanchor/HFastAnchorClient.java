@@ -20,6 +20,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraft.world.World;
 import org.lwjgl.glfw.GLFW;
 
 public final class HFastAnchorClient implements ClientModInitializer {
@@ -129,15 +130,22 @@ public final class HFastAnchorClient implements ClientModInitializer {
                     client.player.swingHand(Hand.MAIN_HAND);
                     stage = Stage.WAIT_CONFIRM;
                     crystalTicks = 0;
-                } else if (++crystalTicks > 40) {
+                } else if (!anchorExists || ++crystalTicks > 40) {
                     reset();
+                } else if (crystalTicks % 3 == 0) {
+                    // Retry charging only when the server has not reflected the charge yet.
+                    select(client, glowstoneSlot);
+                    interactAtAnchor(client);
                 }
             }
             case WAIT_CONFIRM -> {
-                if (!anchorExists) {
+                if (!anchorExists || client.world.getRegistryKey() == World.NETHER || ++crystalTicks > 40) {
                     reset();
-                } else if (++crystalTicks > 40) {
-                    reset();
+                } else if (crystalTicks % 3 == 0
+                        && state.get(RespawnAnchorBlock.CHARGES) > 0) {
+                    // Retry activation if the first interaction packet was not accepted.
+                    interactAtAnchor(client);
+                    client.player.swingHand(Hand.MAIN_HAND);
                 }
             }
             default -> { }

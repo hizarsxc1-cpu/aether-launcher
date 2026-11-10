@@ -33,6 +33,7 @@ public final class HFastAnchorClient implements ClientModInitializer {
     private static int glowstoneSlot = -1;
     private static int ticks;
     private static long stageStartWorldTime;
+    private static int returnSlot = SWORD_SLOT;
 
     // Java inventory indices: 0=hotbar slot 1, 8=hotbar slot 9.
     private static final int SWORD_SLOT = 0;
@@ -59,7 +60,11 @@ public final class HFastAnchorClient implements ClientModInitializer {
             // repeats as soon as each one-tick Obsidian -> Crystal sequence finishes.
             boolean useTapped = client.options.useKey.wasPressed();
             boolean useHeld = client.options.useKey.isPressed();
-            if ((useTapped || useHeld) && stage == Stage.IDLE) {
+            // Prioritize melee: when the attack button is pressed, keep the
+            // sword selected and pause starting another crystal sequence.
+            if (client.options.attackKey.isPressed() && stage == Stage.IDLE) {
+                select(client, SWORD_SLOT);
+            } else if ((useTapped || useHeld) && stage == Stage.IDLE) {
                 runCrystal(client);
             }
             tickAnchor(client);
@@ -132,6 +137,8 @@ public final class HFastAnchorClient implements ClientModInitializer {
             select(client, CRYSTAL_SLOT);
             client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, top);
             client.player.swingHand(Hand.MAIN_HAND);
+            // Return to the previous slot (normally the sword) after the combo.
+            select(client, returnSlot);
             reset();
             return;
         }
@@ -218,8 +225,19 @@ public final class HFastAnchorClient implements ClientModInitializer {
     }
 
     private static void runCrystal(MinecraftClient client) {
-        if (!(client.crosshairTarget instanceof BlockHitResult hit)
-                || hit.getType() != HitResult.Type.BLOCK) return;
+        // If the crosshair is on an enemy, raycast the world blocks behind it.
+        // This lets the Obsidian step work during close-range PvP instead of
+        // silently aborting whenever the crosshair target is an entity.
+        BlockHitResult hit;
+        if (client.crosshairTarget instanceof BlockHitResult crosshairHit
+                && crosshairHit.getType() == HitResult.Type.BLOCK) {
+            hit = crosshairHit;
+        } else {
+            HitResult ray = client.player.raycast(4.5, 1.0F, false);
+            if (!(ray instanceof BlockHitResult blockHit)
+                    || ray.getType() != HitResult.Type.BLOCK) return;
+            hit = blockHit;
+        }
 
         PlayerInventory inv = client.player.getInventory();
         if (!inv.getStack(OBSIDIAN_SLOT).isOf(Items.OBSIDIAN)
@@ -231,12 +249,17 @@ public final class HFastAnchorClient implements ClientModInitializer {
                 || !client.world.getBlockState(pos.up(2)).isAir()) return;
 
         // Place Obsidian now, then place Crystal on the very next client tick.
-        // This is the shortest reliable ordering: the server has one tick to
-        // register the support block before receiving the Crystal interaction.
+        // Remember the user's slot so the sword can be restored immediately
+        // after the combo.
+        int oldSlot = inv.selectedSlot;
         select(client, OBSIDIAN_SLOT);
         ActionResult obsidianResult = client.interactionManager.interactBlock(
                 client.player, Hand.MAIN_HAND, hit);
-        if (!obsidianResult.isAccepted()) return;
+        if (!obsidianResult.isAccepted()) {
+            select(client, oldSlot);
+            return;
+        }
+        returnSlot = oldSlot;
 
         crystalPos = pos;
         stage = Stage.WAIT_CRYSTAL;

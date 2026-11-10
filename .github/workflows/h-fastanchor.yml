@@ -1,4 +1,4 @@
-name: Build Macro By HaniF
+name: Build Nyawit Optimizer
 on:
   push:
     branches: [h-fastanchor-mod]
@@ -28,7 +28,7 @@ jobs:
       - name: Upload mod JAR
         uses: actions/upload-artifact@v4
         with:
-          name: Macro-By-HaniF-Fabric-1.21
+          name: Nyawit-Optimizer-Fabric-1.21
           path: |
             mods/h-fastanchor/build/libs/*.jar
             !mods/h-fastanchor/build/libs/*-sources.jar

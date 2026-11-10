@@ -10,6 +10,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.decoration.EndCrystalEntity;
+import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.util.ActionResult;
@@ -60,8 +62,14 @@ public final class HFastAnchorClient implements ClientModInitializer {
             if ((useTapped || useHeld) && stage == Stage.IDLE) {
                 runCrystal(client, useHeld);
             }
-            // Do not auto-select the sword while the attack key is held.
-            // Crystal breaking stays on the player's currently selected Crystal slot.
+            // If the crosshair is on an End Crystal while attacking, keep/select
+            // the Crystal in hand. Never switch to a sword for Crystal breaking.
+            if (client.options.attackKey.isPressed()
+                    && client.crosshairTarget instanceof EntityHitResult entityHit
+                    && entityHit.getEntity() instanceof EndCrystalEntity
+                    && client.player.getInventory().getStack(CRYSTAL_SLOT).isOf(Items.END_CRYSTAL)) {
+                select(client, CRYSTAL_SLOT);
+            }
             tickAnchor(client);
         });
     }
@@ -217,12 +225,13 @@ public final class HFastAnchorClient implements ClientModInitializer {
         if (!client.world.getBlockState(crystalPos).isAir()
                 || !client.world.getBlockState(crystalPos.up()).isAir()) return;
 
-        int oldSlot = inv.selectedSlot;
+        // Keep Crystal selected after placement so the next attack breaks it
+        // with Crystal in hand instead of visibly swapping to a sword.
         select(client, CRYSTAL_SLOT);
 
-        // A held input sends two back-to-back attempts per client tick to reduce
-        // gaps between placements. The server still decides which placements succeed.
-        int attempts = holdingUse ? 2 : 1;
+        // Increase held-input burst to three attempts per client tick.
+        // Server acceptance and real CPS still depend on tick rate and latency.
+        int attempts = holdingUse ? 3 : 1;
         for (int i = 0; i < attempts; i++) {
             ActionResult result = client.interactionManager.interactBlock(
                     client.player, Hand.MAIN_HAND, hit);
@@ -231,8 +240,7 @@ public final class HFastAnchorClient implements ClientModInitializer {
             }
         }
 
-        // Restore the previous slot without forcing the sword on attack.
-        select(client, oldSlot);
+        // Intentionally do not restore the old slot: Crystal remains in hand.
     }
 
     private static int requireHotbarItem(MinecraftClient client, int slot, Item item) {

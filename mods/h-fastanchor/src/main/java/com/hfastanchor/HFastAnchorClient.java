@@ -20,25 +20,25 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraft.world.World;
 import org.lwjgl.glfw.GLFW;
 
 public final class HFastAnchorClient implements ClientModInitializer {
     private static KeyBinding anchorKey;
     private static KeyBinding crystalKey;
 
-    private enum Stage { IDLE, WAIT_ANCHOR, WAIT_CHARGE, WAIT_CONFIRM, WAIT_OBSIDIAN }
+    private enum Stage { IDLE, WAIT_ANCHOR, WAIT_CHARGE, WAIT_CONFIRM }
     private static Stage stage = Stage.IDLE;
 
     private static BlockPos anchorPos;
-    private static BlockPos crystalObsidianPos;
     private static int glowstoneSlot = -1;
-    private static int crystalTicks;
+    private static int ticks;
 
+    // Java inventory indices: 0=hotbar slot 1, 8=hotbar slot 9.
+    private static final int SWORD_SLOT = 0;
     private static final int OBSIDIAN_SLOT = 1;
     private static final int CRYSTAL_SLOT = 2;
-    private static final int GLOWSTONE_HOTBAR_SLOT = 7;
-    private static final int ANCHOR_HOTBAR_SLOT = 8;
+    private static final int GLOWSTONE_SLOT = 7;
+    private static final int ANCHOR_SLOT = 8;
 
     @Override
     public void onInitializeClient() {
@@ -54,20 +54,21 @@ public final class HFastAnchorClient implements ClientModInitializer {
                 reset();
                 return;
             }
+
             while (anchorKey.wasPressed()) {
                 if (stage == Stage.IDLE) startAnchor(client);
             }
             while (crystalKey.wasPressed()) {
                 if (stage == Stage.IDLE) runCrystal(client);
             }
-            tickMacro(client);
+            tickAnchor(client);
         });
     }
 
     private static void startAnchor(MinecraftClient client) {
-        int anchorSlot = requireHotbarItem(client, ANCHOR_HOTBAR_SLOT, Items.RESPAWN_ANCHOR);
-        glowstoneSlot = requireHotbarItem(client, GLOWSTONE_HOTBAR_SLOT, Items.GLOWSTONE);
-        if (anchorSlot < 0 || glowstoneSlot < 0) {
+        int anchor = requireHotbarItem(client, ANCHOR_SLOT, Items.RESPAWN_ANCHOR);
+        glowstoneSlot = requireHotbarItem(client, GLOWSTONE_SLOT, Items.GLOWSTONE);
+        if (anchor < 0 || glowstoneSlot < 0) {
             reset();
             return;
         }
@@ -79,71 +80,72 @@ public final class HFastAnchorClient implements ClientModInitializer {
         }
 
         anchorPos = hit.getBlockPos().offset(hit.getSide());
-        BlockState targetState = client.world.getBlockState(anchorPos);
-        if (!targetState.isReplaceable()) {
+        if (!client.world.getBlockState(anchorPos).isReplaceable()) {
             reset();
             return;
         }
 
-        select(client, anchorSlot);
-        ActionResult result = client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, hit);
+        select(client, anchor);
+        ActionResult result = client.interactionManager.interactBlock(
+                client.player, Hand.MAIN_HAND, hit);
         if (result.isAccepted()) {
             stage = Stage.WAIT_ANCHOR;
-            crystalTicks = 0;
+            ticks = 0;
         } else {
             reset();
         }
     }
 
-    private static void tickMacro(MinecraftClient client) {
+    private static void tickAnchor(MinecraftClient client) {
         if (stage == Stage.IDLE) return;
-        if (client.currentScreen != null) {
+        if (client.currentScreen != null || anchorPos == null) {
             reset();
             return;
         }
 
-        if (stage == Stage.WAIT_OBSIDIAN) {
-            tickCrystal(client);
-            return;
-        }
-
         BlockState state = client.world.getBlockState(anchorPos);
-        boolean anchorExists = state.isOf(Blocks.RESPAWN_ANCHOR);
+        boolean exists = state.isOf(Blocks.RESPAWN_ANCHOR);
 
         switch (stage) {
             case WAIT_ANCHOR -> {
-                if (anchorExists) {
+                if (exists) {
                     select(client, glowstoneSlot);
                     interactAtAnchor(client);
                     stage = Stage.WAIT_CHARGE;
-                    crystalTicks = 0;
-                } else if (++crystalTicks > 40) {
+                    ticks = 0;
+                } else if (++ticks > 30) {
                     reset();
                 }
             }
             case WAIT_CHARGE -> {
-                if (anchorExists && state.get(RespawnAnchorBlock.CHARGES) > 0) {
-                    // A Totem in the main hand protects the player and is consumed from its hotbar slot.
-                    // If no hotbar Totem exists, leave Glowstone selected and still attempt detonation.
-                    selectHotbarTotemOrKeepCurrent(client);
+                if (!exists) {
+                    reset();
+                    return;
+                }
+                if (state.get(RespawnAnchorBlock.CHARGES) > 0) {
+                    // Never leave Glowstone in hand for the activation click.
+                    // Prefer a Totem; otherwise use Obsidian/Crystal/empty slot.
+                    selectActivationItem(client);
                     interactAtAnchor(client);
                     client.player.swingHand(Hand.MAIN_HAND);
                     stage = Stage.WAIT_CONFIRM;
-                    crystalTicks = 0;
-                } else if (!anchorExists || ++crystalTicks > 40) {
+                    ticks = 0;
+                } else if (++ticks > 30) {
                     reset();
-                } else if (crystalTicks % 3 == 0) {
-                    // Retry charging only when the server has not reflected the charge yet.
+                } else if (ticks % 2 == 0) {
                     select(client, glowstoneSlot);
                     interactAtAnchor(client);
                 }
             }
             case WAIT_CONFIRM -> {
-                if (!anchorExists || client.world.getRegistryKey() == World.NETHER || ++crystalTicks > 40) {
+                // Respawn Anchors do not explode in the Nether.
+                if (client.world.getRegistryKey() == World.NETHER) {
                     reset();
-                } else if (crystalTicks % 3 == 0
-                        && state.get(RespawnAnchorBlock.CHARGES) > 0) {
-                    // Retry activation if the first interaction packet was not accepted.
+                    return;
+                }
+                if (!exists || ++ticks > 12) {
+                    reset();
+                } else if (ticks % 2 == 0) {
                     interactAtAnchor(client);
                     client.player.swingHand(Hand.MAIN_HAND);
                 }
@@ -152,10 +154,10 @@ public final class HFastAnchorClient implements ClientModInitializer {
         }
     }
 
-    private static void selectHotbarTotemOrKeepCurrent(MinecraftClient client) {
+    private static void selectActivationItem(MinecraftClient client) {
         PlayerInventory inv = client.player.getInventory();
 
-        // Prefer a Totem from the hotbar (slot 1..9). Do not swap items into the offhand.
+        // First choice: a Totem in the hotbar.
         for (int i = 0; i < 9; i++) {
             if (inv.getStack(i).isOf(Items.TOTEM_OF_UNDYING)) {
                 select(client, i);
@@ -163,51 +165,58 @@ public final class HFastAnchorClient implements ClientModInitializer {
             }
         }
 
-        // An offhand Totem still protects the player while Glowstone remains in the main hand.
-        // If neither hand has a Totem, the charged Anchor is still activated.
+        // Do not select the user's sword (slot 1). Prefer an empty slot,
+        // then Obsidian, then Crystal, then any other safe hotbar item.
+        for (int i = 1; i < 9; i++) {
+            if (i != GLOWSTONE_SLOT && i != ANCHOR_SLOT && inv.getStack(i).isEmpty()) {
+                select(client, i);
+                return;
+            }
+        }
+        if (inv.getStack(OBSIDIAN_SLOT).isOf(Items.OBSIDIAN)) {
+            select(client, OBSIDIAN_SLOT);
+            return;
+        }
+        if (inv.getStack(CRYSTAL_SLOT).isOf(Items.END_CRYSTAL)) {
+            select(client, CRYSTAL_SLOT);
+            return;
+        }
+        for (int i = 1; i < 7; i++) {
+            if (!inv.getStack(i).isOf(Items.GLOWSTONE)
+                    && !inv.getStack(i).isOf(Items.RESPAWN_ANCHOR)) {
+                select(client, i);
+                return;
+            }
+        }
     }
 
     private static void runCrystal(MinecraftClient client) {
         if (!(client.crosshairTarget instanceof BlockHitResult hit)
-                || hit.getType() != HitResult.Type.BLOCK) {
-            return;
-        }
-        if (!client.player.getInventory().getStack(OBSIDIAN_SLOT).isOf(Items.OBSIDIAN)) return;
-        if (!client.player.getInventory().getStack(CRYSTAL_SLOT).isOf(Items.END_CRYSTAL)) return;
+                || hit.getType() != HitResult.Type.BLOCK) return;
 
-        crystalObsidianPos = hit.getBlockPos().offset(hit.getSide());
-        if (!client.world.getBlockState(crystalObsidianPos).isReplaceable()) {
-            crystalObsidianPos = null;
-            return;
-        }
+        PlayerInventory inv = client.player.getInventory();
+        if (!inv.getStack(OBSIDIAN_SLOT).isOf(Items.OBSIDIAN)
+                || !inv.getStack(CRYSTAL_SLOT).isOf(Items.END_CRYSTAL)) return;
 
-        // Place Obsidian first, then wait only for the actual block-state update (no fixed delay).
+        BlockPos pos = hit.getBlockPos().offset(hit.getSide());
+        if (!client.world.getBlockState(pos).isReplaceable()) return;
+        if (!client.world.getBlockState(pos.up()).isAir()
+                || !client.world.getBlockState(pos.up(2)).isAir()) return;
+
+        // Send the Obsidian placement first, then the Crystal placement
+        // immediately in the same client tick. The server processes these
+        // interaction packets in order; no block-update wait is added.
         select(client, OBSIDIAN_SLOT);
-        ActionResult result = client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, hit);
-        if (result.isAccepted()) {
-            stage = Stage.WAIT_OBSIDIAN;
-            crystalTicks = 0;
-        } else {
-            crystalObsidianPos = null;
-        }
-    }
+        ActionResult obsidianResult = client.interactionManager.interactBlock(
+                client.player, Hand.MAIN_HAND, hit);
+        if (!obsidianResult.isAccepted()) return;
 
-    private static void tickCrystal(MinecraftClient client) {
-        if (client.world.getBlockState(crystalObsidianPos).isOf(Blocks.OBSIDIAN)) {
-            BlockPos above = crystalObsidianPos.up();
-            BlockHitResult top = new BlockHitResult(
-                    Vec3d.ofCenter(crystalObsidianPos).add(0.0, 0.5, 0.0),
-                    Direction.UP, crystalObsidianPos, false);
-
-            select(client, CRYSTAL_SLOT);
-            client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, top);
-            client.player.swingHand(Hand.MAIN_HAND);
-            reset();
-            return;
-        }
-
-        // Stop waiting if the server never accepts the Obsidian placement.
-        if (++crystalTicks > 40) reset();
+        BlockHitResult top = new BlockHitResult(
+                Vec3d.ofCenter(pos).add(0.0, 0.5, 0.0),
+                Direction.UP, pos, false);
+        select(client, CRYSTAL_SLOT);
+        client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, top);
+        client.player.swingHand(Hand.MAIN_HAND);
     }
 
     private static int requireHotbarItem(MinecraftClient client, int slot, Item item) {
@@ -222,14 +231,13 @@ public final class HFastAnchorClient implements ClientModInitializer {
 
     private static void select(MinecraftClient client, int slot) {
         client.player.getInventory().selectedSlot = slot;
+        client.interactionManager.syncSelectedSlot();
     }
 
-    // Intentionally silent: no macro status text above the hotbar or in chat.
     private static void reset() {
         stage = Stage.IDLE;
         anchorPos = null;
-        crystalObsidianPos = null;
         glowstoneSlot = -1;
-        crystalTicks = 0;
+        ticks = 0;
     }
 }

@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "hfastanchor",
   "version": "${version}",
-  "name": "Macro By HaniF",
-  "description": "Silent Anchor and Crystal combo macros for Minecraft 1.21.",
+  "name": "Nyawit Optimizer",
+  "description": "Fast crystal placement and Anchor macro for Minecraft 1.21.",
   "environment": "client",
   "entrypoints": {
     "client": [

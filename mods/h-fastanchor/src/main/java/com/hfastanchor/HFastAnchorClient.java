@@ -26,7 +26,7 @@ public final class HFastAnchorClient implements ClientModInitializer {
     private static KeyBinding anchorKey;
     private static KeyBinding crystalKey;
 
-    private enum Stage { IDLE, WAIT_ANCHOR, WAIT_CHARGE, WAIT_CONFIRM }
+    private enum Stage { IDLE, WAIT_ANCHOR, WAIT_CHARGE }
     private static Stage stage = Stage.IDLE;
 
     private static BlockPos anchorPos;
@@ -108,46 +108,33 @@ public final class HFastAnchorClient implements ClientModInitializer {
 
         switch (stage) {
             case WAIT_ANCHOR -> {
-                if (exists) {
+                // Give the server one tick to acknowledge placement, then
+                // send the charge interaction without waiting for a long block update.
+                if (exists || ++ticks >= 2) {
                     select(client, glowstoneSlot);
                     interactAtAnchor(client);
                     stage = Stage.WAIT_CHARGE;
                     ticks = 0;
-                } else if (++ticks > 30) {
-                    reset();
                 }
             }
             case WAIT_CHARGE -> {
-                if (!exists) {
-                    reset();
-                    return;
-                }
-                if (state.get(RespawnAnchorBlock.CHARGES) > 0) {
-                    // Never leave Glowstone in hand for the activation click.
-                    // Prefer a Totem; otherwise use Obsidian/Crystal/empty slot.
-                    selectActivationItem(client);
-                    interactAtAnchor(client);
-                    client.player.swingHand(Hand.MAIN_HAND);
-                    stage = Stage.WAIT_CONFIRM;
-                    ticks = 0;
-                } else if (++ticks > 30) {
-                    reset();
-                } else if (ticks % 2 == 0) {
-                    select(client, glowstoneSlot);
-                    interactAtAnchor(client);
-                }
-            }
-            case WAIT_CONFIRM -> {
-                // Respawn Anchors do not explode in the Nether.
                 if (client.world.getRegistryKey() == World.NETHER) {
                     reset();
                     return;
                 }
-                if (!exists || ++ticks > 12) {
-                    reset();
-                } else if (ticks % 2 == 0) {
+
+                if (exists && state.get(RespawnAnchorBlock.CHARGES) > 0) {
+                    // Switch away from Glowstone and trigger the explosion immediately.
+                    selectActivationItem(client);
                     interactAtAnchor(client);
                     client.player.swingHand(Hand.MAIN_HAND);
+                    reset();
+                } else if (++ticks <= 4) {
+                    // Retry quickly while the server/client block state catches up.
+                    select(client, glowstoneSlot);
+                    interactAtAnchor(client);
+                } else {
+                    reset();
                 }
             }
             default -> { }

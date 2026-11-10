@@ -26,10 +26,11 @@ public final class HFastAnchorClient implements ClientModInitializer {
     private static KeyBinding anchorKey;
     private static KeyBinding crystalKey;
 
-    private enum Stage { IDLE, WAIT_ANCHOR, WAIT_CHARGE }
+    private enum Stage { IDLE, WAIT_ANCHOR, WAIT_CHARGE, WAIT_CRYSTAL }
     private static Stage stage = Stage.IDLE;
 
     private static BlockPos anchorPos;
+    private static BlockPos crystalPos;
     private static int glowstoneSlot = -1;
     private static int ticks;
 
@@ -98,7 +99,25 @@ public final class HFastAnchorClient implements ClientModInitializer {
 
     private static void tickAnchor(MinecraftClient client) {
         if (stage == Stage.IDLE) return;
-        if (client.currentScreen != null || anchorPos == null) {
+        if (client.currentScreen != null) {
+            reset();
+            return;
+        }
+        if (stage == Stage.WAIT_CRYSTAL) {
+            if (crystalPos == null) {
+                reset();
+                return;
+            }
+            BlockHitResult top = new BlockHitResult(
+                    Vec3d.ofCenter(crystalPos).add(0.0, 0.5, 0.0),
+                    Direction.UP, crystalPos, false);
+            select(client, CRYSTAL_SLOT);
+            client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, top);
+            client.player.swingHand(Hand.MAIN_HAND);
+            reset();
+            return;
+        }
+        if (anchorPos == null) {
             reset();
             return;
         }
@@ -190,20 +209,17 @@ public final class HFastAnchorClient implements ClientModInitializer {
         if (!client.world.getBlockState(pos.up()).isAir()
                 || !client.world.getBlockState(pos.up(2)).isAir()) return;
 
-        // Send the Obsidian placement first, then the Crystal placement
-        // immediately in the same client tick. The server processes these
-        // interaction packets in order; no block-update wait is added.
+        // Place Obsidian now, then place Crystal on the very next client tick.
+        // This is the shortest reliable ordering: the server has one tick to
+        // register the support block before receiving the Crystal interaction.
         select(client, OBSIDIAN_SLOT);
         ActionResult obsidianResult = client.interactionManager.interactBlock(
                 client.player, Hand.MAIN_HAND, hit);
         if (!obsidianResult.isAccepted()) return;
 
-        BlockHitResult top = new BlockHitResult(
-                Vec3d.ofCenter(pos).add(0.0, 0.5, 0.0),
-                Direction.UP, pos, false);
-        select(client, CRYSTAL_SLOT);
-        client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, top);
-        client.player.swingHand(Hand.MAIN_HAND);
+        crystalPos = pos;
+        stage = Stage.WAIT_CRYSTAL;
+        ticks = 0;
     }
 
     private static int requireHotbarItem(MinecraftClient client, int slot, Item item) {
@@ -224,6 +240,7 @@ public final class HFastAnchorClient implements ClientModInitializer {
     private static void reset() {
         stage = Stage.IDLE;
         anchorPos = null;
+        crystalPos = null;
         glowstoneSlot = -1;
         ticks = 0;
     }

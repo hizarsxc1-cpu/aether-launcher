@@ -34,7 +34,6 @@ public final class HFastAnchorClient implements ClientModInitializer {
     private static long stageStartWorldTime;
 
     // Java inventory indices: 0=hotbar slot 1, 8=hotbar slot 9.
-    private static final int SWORD_SLOT = 0;
     private static final int OBSIDIAN_SLOT = 1;
     private static final int CRYSTAL_SLOT = 2;
     private static final int GLOWSTONE_SLOT = 7;
@@ -55,14 +54,14 @@ public final class HFastAnchorClient implements ClientModInitializer {
                 if (stage == Stage.IDLE) startAnchor(client);
             }
             // Crystal-only fast place: Obsidian remains completely manual.
-            // A tap places one crystal; holding right-click repeats placement.
+            // A tap sends one placement attempt; holding sends two rapid attempts per tick.
             boolean useTapped = client.options.useKey.wasPressed();
             boolean useHeld = client.options.useKey.isPressed();
-            if (client.options.attackKey.isPressed() && stage == Stage.IDLE) {
-                select(client, SWORD_SLOT);
-            } else if ((useTapped || useHeld) && stage == Stage.IDLE) {
-                runCrystal(client);
+            if ((useTapped || useHeld) && stage == Stage.IDLE) {
+                runCrystal(client, useHeld);
             }
+            // Do not auto-select the sword while the attack key is held.
+            // Crystal breaking stays on the player's currently selected Crystal slot.
             tickAnchor(client);
         });
     }
@@ -177,8 +176,7 @@ public final class HFastAnchorClient implements ClientModInitializer {
             }
         }
 
-        // Do not select the user's sword (slot 1). Prefer an empty slot,
-        // then Obsidian, then Crystal, then any other safe hotbar item.
+        // Prefer an empty slot, then Obsidian, then Crystal, then another safe item.
         for (int i = 1; i < 9; i++) {
             if (i != GLOWSTONE_SLOT && i != ANCHOR_SLOT && inv.getStack(i).isEmpty()) {
                 select(client, i);
@@ -202,7 +200,7 @@ public final class HFastAnchorClient implements ClientModInitializer {
         }
     }
 
-    private static void runCrystal(MinecraftClient client) {
+    private static void runCrystal(MinecraftClient client, boolean holdingUse) {
         // Only place a Crystal on an existing Obsidian/Bedrock block.
         // Never select or place Obsidian here: that remains the user's normal input.
         if (!(client.crosshairTarget instanceof BlockHitResult hit)
@@ -221,12 +219,19 @@ public final class HFastAnchorClient implements ClientModInitializer {
 
         int oldSlot = inv.selectedSlot;
         select(client, CRYSTAL_SLOT);
-        ActionResult result = client.interactionManager.interactBlock(
-                client.player, Hand.MAIN_HAND, hit);
-        if (result.isAccepted()) {
-            client.player.swingHand(Hand.MAIN_HAND);
+
+        // A held input sends two back-to-back attempts per client tick to reduce
+        // gaps between placements. The server still decides which placements succeed.
+        int attempts = holdingUse ? 2 : 1;
+        for (int i = 0; i < attempts; i++) {
+            ActionResult result = client.interactionManager.interactBlock(
+                    client.player, Hand.MAIN_HAND, hit);
+            if (result.isAccepted()) {
+                client.player.swingHand(Hand.MAIN_HAND);
+            }
         }
-        // Restore the selected item immediately so melee/normal play is not disrupted.
+
+        // Restore the previous slot without forcing the sword on attack.
         select(client, oldSlot);
     }
 

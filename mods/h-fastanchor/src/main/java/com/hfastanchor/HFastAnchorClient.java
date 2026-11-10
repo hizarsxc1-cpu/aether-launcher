@@ -229,9 +229,9 @@ public final class HFastAnchorClient implements ClientModInitializer {
         // with Crystal in hand instead of visibly swapping to a sword.
         select(client, CRYSTAL_SLOT);
 
-        // Increase held-input burst to three attempts per client tick.
+        // Send ten Crystal placement attempts per client tick while held.
         // Server acceptance and real CPS still depend on tick rate and latency.
-        int attempts = holdingUse ? 3 : 1;
+        int attempts = holdingUse ? 10 : 1;
         for (int i = 0; i < attempts; i++) {
             ActionResult result = client.interactionManager.interactBlock(
                     client.player, Hand.MAIN_HAND, hit);

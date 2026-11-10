@@ -74,13 +74,28 @@ public final class HFastAnchorClient implements ClientModInitializer {
             return;
         }
 
-        if (!(client.crosshairTarget instanceof BlockHitResult hit)
-                || hit.getType() != HitResult.Type.BLOCK) {
-            reset();
-            return;
+        // Prefer the normal crosshair block. If an entity is in front of it,
+        // raycast the world directly so the entity does not steal the target.
+        BlockHitResult hit;
+        if (client.crosshairTarget instanceof BlockHitResult crosshairHit
+                && crosshairHit.getType() == HitResult.Type.BLOCK) {
+            hit = crosshairHit;
+        } else {
+            HitResult ray = client.player.raycast(4.5, 1.0F, false);
+            if (!(ray instanceof BlockHitResult blockHit)
+                    || ray.getType() != HitResult.Type.BLOCK) {
+                reset();
+                return;
+            }
+            hit = blockHit;
         }
 
-        anchorPos = hit.getBlockPos().offset(hit.getSide());
+        // The adjacent block can be fire left on top of a support block.
+        // It is replaceable, so the anchor can occupy that exact position.
+        BlockPos clickedPos = hit.getBlockPos();
+        BlockPos adjacentPos = clickedPos.offset(hit.getSide());
+        anchorPos = client.world.getBlockState(clickedPos).isReplaceable()
+                ? clickedPos : adjacentPos;
         if (!client.world.getBlockState(anchorPos).isReplaceable()) {
             reset();
             return;
@@ -233,8 +248,8 @@ public final class HFastAnchorClient implements ClientModInitializer {
     }
 
     private static void select(MinecraftClient client, int slot) {
+        // interactBlock() synchronizes the selected hotbar slot internally.
         client.player.getInventory().selectedSlot = slot;
-        client.interactionManager.syncSelectedSlot();
     }
 
     private static void reset() {

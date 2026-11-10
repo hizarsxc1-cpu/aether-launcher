@@ -25,15 +25,13 @@ import org.lwjgl.glfw.GLFW;
 public final class HFastAnchorClient implements ClientModInitializer {
     private static KeyBinding anchorKey;
 
-    private enum Stage { IDLE, WAIT_ANCHOR, WAIT_CHARGE, WAIT_CRYSTAL }
+    private enum Stage { IDLE, WAIT_ANCHOR, WAIT_CHARGE }
     private static Stage stage = Stage.IDLE;
 
     private static BlockPos anchorPos;
-    private static BlockPos crystalPos;
     private static int glowstoneSlot = -1;
     private static int ticks;
     private static long stageStartWorldTime;
-    private static int returnSlot;
 
     // Java inventory indices: 0=hotbar slot 1, 8=hotbar slot 9.
     private static final int SWORD_SLOT = 0;
@@ -56,12 +54,10 @@ public final class HFastAnchorClient implements ClientModInitializer {
             while (anchorKey.wasPressed()) {
                 if (stage == Stage.IDLE) startAnchor(client);
             }
-            // A single right-click tap runs one combo; holding right-click
-            // repeats as soon as each one-tick Obsidian -> Crystal sequence finishes.
+            // Crystal-only fast place: Obsidian remains completely manual.
+            // A tap places one crystal; holding right-click repeats placement.
             boolean useTapped = client.options.useKey.wasPressed();
             boolean useHeld = client.options.useKey.isPressed();
-            // Prioritize melee: when the attack button is pressed, keep the
-            // sword selected and pause starting another crystal sequence.
             if (client.options.attackKey.isPressed() && stage == Stage.IDLE) {
                 select(client, SWORD_SLOT);
             } else if ((useTapped || useHeld) && stage == Stage.IDLE) {
@@ -121,24 +117,6 @@ public final class HFastAnchorClient implements ClientModInitializer {
     private static void tickAnchor(MinecraftClient client) {
         if (stage == Stage.IDLE) return;
         if (client.currentScreen != null) {
-            reset();
-            return;
-        }
-        if (stage == Stage.WAIT_CRYSTAL) {
-            // Do not run in the same END_CLIENT_TICK as the Obsidian click.
-            if (client.world.getTime() <= stageStartWorldTime) return;
-            if (crystalPos == null) {
-                reset();
-                return;
-            }
-            BlockHitResult top = new BlockHitResult(
-                    Vec3d.ofCenter(crystalPos).add(0.0, 0.5, 0.0),
-                    Direction.UP, crystalPos, false);
-            select(client, CRYSTAL_SLOT);
-            client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, top);
-            client.player.swingHand(Hand.MAIN_HAND);
-            // Return to the previous slot (normally the sword) after the combo.
-            select(client, returnSlot);
             reset();
             return;
         }
@@ -225,46 +203,31 @@ public final class HFastAnchorClient implements ClientModInitializer {
     }
 
     private static void runCrystal(MinecraftClient client) {
-        // If the crosshair is on an enemy, raycast the world blocks behind it.
-        // This lets the Obsidian step work during close-range PvP instead of
-        // silently aborting whenever the crosshair target is an entity.
-        BlockHitResult hit;
-        if (client.crosshairTarget instanceof BlockHitResult crosshairHit
-                && crosshairHit.getType() == HitResult.Type.BLOCK) {
-            hit = crosshairHit;
-        } else {
-            HitResult ray = client.player.raycast(4.5, 1.0F, false);
-            if (!(ray instanceof BlockHitResult blockHit)
-                    || ray.getType() != HitResult.Type.BLOCK) return;
-            hit = blockHit;
-        }
+        // Only place a Crystal on an existing Obsidian/Bedrock block.
+        // Never select or place Obsidian here: that remains the user's normal input.
+        if (!(client.crosshairTarget instanceof BlockHitResult hit)
+                || hit.getType() != HitResult.Type.BLOCK) return;
+
+        BlockPos supportPos = hit.getBlockPos();
+        BlockState support = client.world.getBlockState(supportPos);
+        if (!support.isOf(Blocks.OBSIDIAN) && !support.isOf(Blocks.BEDROCK)) return;
 
         PlayerInventory inv = client.player.getInventory();
-        if (!inv.getStack(OBSIDIAN_SLOT).isOf(Items.OBSIDIAN)
-                || !inv.getStack(CRYSTAL_SLOT).isOf(Items.END_CRYSTAL)) return;
+        if (!inv.getStack(CRYSTAL_SLOT).isOf(Items.END_CRYSTAL)) return;
 
-        BlockPos pos = hit.getBlockPos().offset(hit.getSide());
-        if (!client.world.getBlockState(pos).isReplaceable()) return;
-        if (!client.world.getBlockState(pos.up()).isAir()
-                || !client.world.getBlockState(pos.up(2)).isAir()) return;
+        BlockPos crystalPos = supportPos.up();
+        if (!client.world.getBlockState(crystalPos).isAir()
+                || !client.world.getBlockState(crystalPos.up()).isAir()) return;
 
-        // Place Obsidian now, then place Crystal on the very next client tick.
-        // Remember the user's slot so the sword can be restored immediately
-        // after the combo.
         int oldSlot = inv.selectedSlot;
-        select(client, OBSIDIAN_SLOT);
-        ActionResult obsidianResult = client.interactionManager.interactBlock(
+        select(client, CRYSTAL_SLOT);
+        ActionResult result = client.interactionManager.interactBlock(
                 client.player, Hand.MAIN_HAND, hit);
-        if (!obsidianResult.isAccepted()) {
-            select(client, oldSlot);
-            return;
+        if (result.isAccepted()) {
+            client.player.swingHand(Hand.MAIN_HAND);
         }
-        returnSlot = oldSlot;
-
-        crystalPos = pos;
-        stage = Stage.WAIT_CRYSTAL;
-        ticks = 0;
-        stageStartWorldTime = client.world.getTime();
+        // Restore the selected item immediately so melee/normal play is not disrupted.
+        select(client, oldSlot);
     }
 
     private static int requireHotbarItem(MinecraftClient client, int slot, Item item) {
@@ -285,7 +248,6 @@ public final class HFastAnchorClient implements ClientModInitializer {
     private static void reset() {
         stage = Stage.IDLE;
         anchorPos = null;
-        crystalPos = null;
         glowstoneSlot = -1;
         ticks = 0;
         stageStartWorldTime = 0L;

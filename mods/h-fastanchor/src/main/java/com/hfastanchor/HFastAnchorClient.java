@@ -24,7 +24,6 @@ import org.lwjgl.glfw.GLFW;
 
 public final class HFastAnchorClient implements ClientModInitializer {
     private static KeyBinding anchorKey;
-    private static KeyBinding crystalKey;
 
     private enum Stage { IDLE, WAIT_ANCHOR, WAIT_CHARGE, WAIT_CRYSTAL }
     private static Stage stage = Stage.IDLE;
@@ -47,10 +46,6 @@ public final class HFastAnchorClient implements ClientModInitializer {
         anchorKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.hfastanchor.combo", InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_Z, "category.hfastanchor"));
-        crystalKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.hfastanchor.crystal", InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_X, "category.hfastanchor"));
-
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.world == null || client.interactionManager == null) {
                 reset();
@@ -60,10 +55,11 @@ public final class HFastAnchorClient implements ClientModInitializer {
             while (anchorKey.wasPressed()) {
                 if (stage == Stage.IDLE) startAnchor(client);
             }
-            // Hold X to repeat the Obsidian -> Crystal combo continuously.
-            // The two-tick sequence naturally caps successful placements at
-            // about 10 combos per second on a 20 TPS client.
-            if (crystalKey.isPressed() && stage == Stage.IDLE) {
+            // A single right-click tap runs one combo; holding right-click
+            // repeats as soon as each one-tick Obsidian -> Crystal sequence finishes.
+            boolean useTapped = client.options.useKey.wasPressed();
+            boolean useHeld = client.options.useKey.isPressed();
+            if ((useTapped || useHeld) && stage == Stage.IDLE) {
                 runCrystal(client);
             }
             tickAnchor(client);

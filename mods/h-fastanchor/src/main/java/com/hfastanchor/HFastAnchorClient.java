@@ -60,8 +60,11 @@ public final class HFastAnchorClient implements ClientModInitializer {
             while (anchorKey.wasPressed()) {
                 if (stage == Stage.IDLE) startAnchor(client);
             }
-            while (crystalKey.wasPressed()) {
-                if (stage == Stage.IDLE) runCrystal(client);
+            // Hold X to repeat the Obsidian -> Crystal combo continuously.
+            // The two-tick sequence naturally caps successful placements at
+            // about 10 combos per second on a 20 TPS client.
+            if (crystalKey.isPressed() && stage == Stage.IDLE) {
+                runCrystal(client);
             }
             tickAnchor(client);
         });

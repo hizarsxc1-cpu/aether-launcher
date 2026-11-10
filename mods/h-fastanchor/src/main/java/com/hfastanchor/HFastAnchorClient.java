@@ -33,6 +33,7 @@ public final class HFastAnchorClient implements ClientModInitializer {
     private static BlockPos crystalPos;
     private static int glowstoneSlot = -1;
     private static int ticks;
+    private static long stageStartWorldTime;
 
     // Java inventory indices: 0=hotbar slot 1, 8=hotbar slot 9.
     private static final int SWORD_SLOT = 0;
@@ -107,6 +108,7 @@ public final class HFastAnchorClient implements ClientModInitializer {
         if (result.isAccepted()) {
             stage = Stage.WAIT_ANCHOR;
             ticks = 0;
+            stageStartWorldTime = client.world.getTime();
         } else {
             reset();
         }
@@ -119,6 +121,8 @@ public final class HFastAnchorClient implements ClientModInitializer {
             return;
         }
         if (stage == Stage.WAIT_CRYSTAL) {
+            // Do not run in the same END_CLIENT_TICK as the Obsidian click.
+            if (client.world.getTime() <= stageStartWorldTime) return;
             if (crystalPos == null) {
                 reset();
                 return;
@@ -142,6 +146,7 @@ public final class HFastAnchorClient implements ClientModInitializer {
 
         switch (stage) {
             case WAIT_ANCHOR -> {
+                if (client.world.getTime() <= stageStartWorldTime) return;
                 // Give the server one tick to acknowledge placement, then
                 // send the charge interaction without waiting for a long block update.
                 if (exists || ++ticks >= 2) {
@@ -149,9 +154,11 @@ public final class HFastAnchorClient implements ClientModInitializer {
                     interactAtAnchor(client);
                     stage = Stage.WAIT_CHARGE;
                     ticks = 0;
+                    stageStartWorldTime = client.world.getTime();
                 }
             }
             case WAIT_CHARGE -> {
+                if (client.world.getTime() <= stageStartWorldTime) return;
                 if (client.world.getRegistryKey() == World.NETHER) {
                     reset();
                     return;
@@ -235,6 +242,7 @@ public final class HFastAnchorClient implements ClientModInitializer {
         crystalPos = pos;
         stage = Stage.WAIT_CRYSTAL;
         ticks = 0;
+        stageStartWorldTime = client.world.getTime();
     }
 
     private static int requireHotbarItem(MinecraftClient client, int slot, Item item) {
@@ -258,5 +266,6 @@ public final class HFastAnchorClient implements ClientModInitializer {
         crystalPos = null;
         glowstoneSlot = -1;
         ticks = 0;
+        stageStartWorldTime = 0L;
     }
 }

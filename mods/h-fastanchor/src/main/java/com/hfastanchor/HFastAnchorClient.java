@@ -33,7 +33,7 @@ public final class HFastAnchorClient implements ClientModInitializer {
     private static int glowstoneSlot = -1;
     private static int ticks;
     private static long stageStartWorldTime;
-    private static int returnSlot = SWORD_SLOT;
+    private static int returnSlot;
 
     // Java inventory indices: 0=hotbar slot 1, 8=hotbar slot 9.
     private static final int SWORD_SLOT = 0;

@@ -127,10 +127,20 @@ public final class TelekineticBladesClient implements ClientModInitializer {
     private static void basicEffect(MinecraftClient c, LivingEntity e) {
         if (c.world == null) return;
         Vec3d p = e.getBoundingBox().getCenter();
-        for (int i = 0; i < 12; i++) {
-            double a = i * Math.PI * 2 / 12.0;
-            c.world.addParticle(ParticleTypes.CRIT, p.x + Math.cos(a) * 0.65,
-                    p.y + 0.2, p.z + Math.sin(a) * 0.65, 0, 0.05, 0);
+        // A single fast spectral blade makes the normal left-click skill visible.
+        BladeVisuals.volley(c, e, 1, 0.12, 6);
+        // Tight cyan-white slash arc around the point of contact.
+        for (int i = 0; i < 18; i++) {
+            double a = Math.toRadians(-115.0 + i * (230.0 / 17.0));
+            c.world.addParticle(ParticleTypes.SOUL_FIRE_FLAME,
+                    p.x + Math.cos(a) * 0.78, p.y + 0.25 + Math.sin(a) * 0.42,
+                    p.z + Math.sin(a) * 0.78, Math.cos(a) * 0.025, 0.018,
+                    Math.sin(a) * 0.025);
+            if (i % 2 == 0) {
+                c.world.addParticle(ParticleTypes.CRIT,
+                        p.x + Math.cos(a) * 0.68, p.y + 0.2 + Math.sin(a) * 0.34,
+                        p.z + Math.sin(a) * 0.68, 0, 0.035, 0);
+            }
         }
     }
 

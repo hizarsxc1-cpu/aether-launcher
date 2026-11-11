@@ -274,10 +274,41 @@ final class BladeVisuals {
     }
 
     static void tick() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null) return;
         for (int i = SWORDS.size() - 1; i >= 0; i--) {
             FlyingSword sword = SWORDS.get(i);
             sword.age++;
-            if (sword.age >= sword.life) SWORDS.remove(i);
+            double t = Math.min(1.0, sword.age / (double) sword.life);
+            double eased = t * t * (3.0 - 2.0 * t);
+            double x = sword.sx + (sword.tx - sword.sx) * eased;
+            double y = sword.sy + (sword.ty - sword.sy) * eased;
+            double z = sword.sz + (sword.tz - sword.sz) * eased;
+
+            // Layered blue-white energy trail behind every moving 3D sword.
+            client.world.addParticle(ParticleTypes.SOUL_FIRE_FLAME, x, y, z, 0.0, 0.012, 0.0);
+            client.world.addParticle(ParticleTypes.END_ROD,
+                    x + (Math.random() - 0.5) * 0.12,
+                    y + (Math.random() - 0.5) * 0.12,
+                    z + (Math.random() - 0.5) * 0.12, 0.0, 0.018, 0.0);
+            if (sword.age % 3 == 0) {
+                client.world.addParticle(ParticleTypes.ELECTRIC_SPARK, x, y, z,
+                        (Math.random() - 0.5) * 0.04,
+                        (Math.random() - 0.5) * 0.04,
+                        (Math.random() - 0.5) * 0.04);
+            }
+
+            if (sword.age >= sword.life) {
+                for (int n = 0; n < 10; n++) {
+                    double a = n * Math.PI * 2.0 / 10.0;
+                    client.world.addParticle(ParticleTypes.SOUL_FIRE_FLAME,
+                            sword.tx + Math.cos(a) * 0.45, sword.ty,
+                            sword.tz + Math.sin(a) * 0.45,
+                            Math.cos(a) * 0.035, 0.025, Math.sin(a) * 0.035);
+                }
+                client.world.addParticle(ParticleTypes.CRIT, sword.tx, sword.ty, sword.tz, 0.0, 0.12, 0.0);
+                SWORDS.remove(i);
+            }
         }
     }
 
@@ -291,6 +322,13 @@ final class BladeVisuals {
             double height = 2.2 + (i % 3) * 0.55;
             Vec3d start = end.add(side.multiply(offset)).add(0, height, 0)
                     .subtract(forward.multiply(1.5 + (i % 2) * 0.7));
+            for (int n = 0; n < 5; n++) {
+                double a = n * Math.PI * 2.0 / 5.0;
+                client.world.addParticle(ParticleTypes.SOUL_FIRE_FLAME,
+                        start.x + Math.cos(a) * 0.28, start.y,
+                        start.z + Math.sin(a) * 0.28,
+                        Math.cos(a) * 0.025, 0.025, Math.sin(a) * 0.025);
+            }
             SWORDS.add(new FlyingSword(start, end, life + (i % 4), i * 27.0));
         }
     }
@@ -307,6 +345,13 @@ final class BladeVisuals {
             Vec3d start = origin.add(side.multiply(Math.sin(angle) * radius))
                     .add(forward.multiply(Math.cos(angle) * 0.65))
                     .add(0, 0.3 + (i % 4) * 0.32, 0);
+            for (int n = 0; n < 4; n++) {
+                double a = n * Math.PI * 2.0 / 4.0;
+                client.world.addParticle(ParticleTypes.SOUL_FIRE_FLAME,
+                        start.x + Math.cos(a) * 0.22, start.y,
+                        start.z + Math.sin(a) * 0.22,
+                        Math.cos(a) * 0.02, 0.035, Math.sin(a) * 0.02);
+            }
             SWORDS.add(new FlyingSword(start, end, 18 + (i % 7), i * 19.0));
         }
     }

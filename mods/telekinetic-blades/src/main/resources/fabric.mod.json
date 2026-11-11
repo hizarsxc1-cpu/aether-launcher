@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "telekinetic_blades",
+  "version": "${version}",
+  "name": "Telekinetic Blades",
+  "description": "Single-player telekinetic sword combat skills.",
+  "environment": "client",
+  "entrypoints": { "client": ["com.telekineticblades.TelekineticBladesClient"] },
+  "depends": { "fabricloader": ">=0.15.11", "minecraft": "1.21", "java": ">=21", "fabric-api": "*" }
+}

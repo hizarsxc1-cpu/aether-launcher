@@ -67,7 +67,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
         });
 
         UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
-            if (!world.isClient || hand != net.minecraft.util.Hand.MAIN_HAND) return ActionResult.PASS;
+            if (!world.isClient || hand != net.minecraft.util.Hand.MAIN_HAND || !isDiamondSword(player)) return ActionResult.PASS;
             MinecraftClient c = MinecraftClient.getInstance();
             if (player.isSneaking()) {
                 if (stormCd == 0) bladeStorm(c);

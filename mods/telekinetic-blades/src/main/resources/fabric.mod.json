@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "telekinetic_blades",
   "version": "${version}",
-  "name": "Telekinetic Blades",
+  "name": "Sword Telekinesis",
   "description": "Single-player telekinetic sword combat skills.",
   "environment": "client",
   "entrypoints": { "client": ["com.telekineticblades.TelekineticBladesClient"] },

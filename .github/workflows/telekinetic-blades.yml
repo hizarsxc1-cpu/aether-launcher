@@ -1,4 +1,4 @@
-name: Build Telekinetic Blades
+name: Build Sword Telekinesis
 on:
   push:
     branches: [h-fastanchor-mod]
@@ -25,7 +25,7 @@ jobs:
         run: gradle build --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: Telekinetic-Blades-Fabric-1.21
+          name: Sword-Telekinesis-Fabric-1.21
           path: |
             mods/telekinetic-blades/build/libs/*.jar
             !mods/telekinetic-blades/build/libs/*-sources.jar

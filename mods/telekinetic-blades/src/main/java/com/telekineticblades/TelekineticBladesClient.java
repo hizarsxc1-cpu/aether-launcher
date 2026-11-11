@@ -264,7 +264,7 @@ final class BladeVisuals {
                 matrices.multiply(net.minecraft.util.math.RotationAxis.POSITIVE_Z.rotationDegrees(spin));
                 matrices.scale(1.35f, 1.35f, 1.35f);
                 renderer.renderItem(BLADE,
-                        net.minecraft.item.ModelTransformationMode.FIXED,
+                        net.minecraft.client.render.model.json.ModelTransformationMode.FIXED,
                         net.minecraft.client.render.LightmapTextureManager.MAX_LIGHT_COORDINATE,
                         net.minecraft.client.render.OverlayTexture.DEFAULT_UV,
                         matrices, consumers, context.world(), sword.age);

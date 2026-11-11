@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.MinecraftClient;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -27,6 +28,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        BladeVisuals.init();
         // Video controls: left = Basic, right = Physic, Shift+right = Blade Storm,
         // Shift+left = Penghakiman. Vanilla left-click remains the Basic Attack.
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
@@ -88,6 +90,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.world == null) return;
             tick++;
+            BladeVisuals.tick();
             if (basicCd > 0) basicCd--;
             if (strikeCd > 0) strikeCd--;
             if (stormCd > 0) stormCd--;
@@ -132,6 +135,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
             c.world.addParticle(ParticleTypes.END_ROD, center.x + Math.cos(a) * 1.6,
                     center.y + 0.15, center.z + Math.sin(a) * 1.6, 0, 0.05, 0);
         }
+        BladeVisuals.volley(c, e, 1, 0.25, 9);
         hit(c, e, 1);
         burst(c, e, 36, true);
         strikeCd = 28;
@@ -142,6 +146,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
         if (list.isEmpty()) { message(c, "Arahkan crosshair ke area musuh untuk Blade Storm"); return; }
         for (LivingEntity e : list) {
             Vec3d p = e.getBoundingBox().getCenter();
+            BladeVisuals.volley(c, e, 8, 2.0, 18);
             // Repeated descending blade trails around each selected target.
             for (int sword = 0; sword < 8; sword++) {
                 double a = sword * Math.PI * 2 / 8.0;
@@ -163,6 +168,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
         if (list.isEmpty()) { message(c, "Arahkan crosshair ke musuh untuk Penghakiman"); return; }
         for (LivingEntity e : list) {
             Vec3d p = e.getBoundingBox().getCenter();
+            BladeVisuals.judgmentFan(c, e, 22);
             // Expanding rings and a large impact to represent the ultimate.
             for (int ring = 0; ring < 4; ring++) {
                 for (int i = 0; i < 40; i++) {
@@ -215,5 +221,104 @@ public final class TelekineticBladesClient implements ClientModInitializer {
 
     private static void message(MinecraftClient c, String s) {
         if (c.player != null) c.player.sendMessage(Text.literal("[Telekinetic Blades] " + s), true);
+    }
+}
+
+
+/**
+ * Client-only animated 3D sword visuals. Uses vanilla item models so the blades
+ * are real rendered 3D swords rather than particle dots.
+ */
+final class BladeVisuals {
+    private static final java.util.List<FlyingSword> SWORDS = new java.util.ArrayList<>();
+    private static final net.minecraft.item.ItemStack BLADE =
+            new net.minecraft.item.ItemStack(net.minecraft.item.Items.DIAMOND_SWORD);
+
+    private BladeVisuals() {}
+
+    static void init() {
+        WorldRenderEvents.AFTER_ENTITIES.register(context -> {
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player == null || context.world() == null || context.matrixStack() == null
+                    || context.consumers() == null) return;
+            var matrices = context.matrixStack();
+            var camera = context.camera().getPos();
+            var renderer = client.getItemRenderer();
+            var consumers = context.consumers();
+            for (FlyingSword sword : SWORDS) {
+                double t = Math.min(1.0, sword.age / (double) sword.life);
+                // Fast acceleration into the target, then a short fading tail.
+                double eased = t * t * (3.0 - 2.0 * t);
+                double x = sword.sx + (sword.tx - sword.sx) * eased;
+                double y = sword.sy + (sword.ty - sword.sy) * eased;
+                double z = sword.sz + (sword.tz - sword.sz) * eased;
+                double dx = sword.tx - sword.sx, dz = sword.tz - sword.sz;
+                float yaw = (float) Math.toDegrees(Math.atan2(dx, dz));
+                float pitch = (float) -Math.toDegrees(Math.atan2(sword.ty - sword.sy,
+                        Math.sqrt(dx * dx + dz * dz)));
+                float spin = (float) (sword.age * 13.0 + sword.spin);
+                matrices.push();
+                matrices.translate(x - camera.x, y - camera.y, z - camera.z);
+                matrices.multiply(net.minecraft.util.math.RotationAxis.POSITIVE_Y.rotationDegrees(yaw));
+                matrices.multiply(net.minecraft.util.math.RotationAxis.POSITIVE_X.rotationDegrees(pitch));
+                matrices.multiply(net.minecraft.util.math.RotationAxis.POSITIVE_Z.rotationDegrees(spin));
+                matrices.scale(1.35f, 1.35f, 1.35f);
+                renderer.renderItem(BLADE,
+                        net.minecraft.item.ModelTransformationMode.FIXED,
+                        net.minecraft.client.render.LightmapTextureManager.MAX_LIGHT_COORDINATE,
+                        net.minecraft.client.render.OverlayTexture.DEFAULT_UV,
+                        matrices, consumers, context.world(), sword.age);
+                matrices.pop();
+            }
+        });
+    }
+
+    static void tick() {
+        for (int i = SWORDS.size() - 1; i >= 0; i--) {
+            FlyingSword sword = SWORDS.get(i);
+            sword.age++;
+            if (sword.age >= sword.life) SWORDS.remove(i);
+        }
+    }
+
+    static void volley(MinecraftClient client, LivingEntity target, int count, double spread, int life) {
+        if (client.player == null) return;
+        Vec3d end = target.getBoundingBox().getCenter();
+        Vec3d forward = end.subtract(client.player.getEyePos()).normalize();
+        Vec3d side = new Vec3d(-forward.z, 0, forward.x).normalize();
+        for (int i = 0; i < count; i++) {
+            double offset = count == 1 ? 0 : (i - (count - 1) / 2.0) * spread / Math.max(1, count / 3.0);
+            double height = 2.2 + (i % 3) * 0.55;
+            Vec3d start = end.add(side.multiply(offset)).add(0, height, 0)
+                    .subtract(forward.multiply(1.5 + (i % 2) * 0.7));
+            SWORDS.add(new FlyingSword(start, end, life + (i % 4), i * 27.0));
+        }
+    }
+
+    static void judgmentFan(MinecraftClient client, LivingEntity target, int count) {
+        if (client.player == null) return;
+        Vec3d origin = client.player.getPos().add(0, 1.35, 0);
+        Vec3d end = target.getBoundingBox().getCenter();
+        Vec3d forward = end.subtract(origin).normalize();
+        Vec3d side = new Vec3d(-forward.z, 0, forward.x).normalize();
+        for (int i = 0; i < count; i++) {
+            double angle = Math.toRadians(-78.0 + (156.0 * i / Math.max(1, count - 1)));
+            double radius = 2.1 + (i % 3) * 0.22;
+            Vec3d start = origin.add(side.multiply(Math.sin(angle) * radius))
+                    .add(forward.multiply(Math.cos(angle) * 0.65))
+                    .add(0, 0.3 + (i % 4) * 0.32, 0);
+            SWORDS.add(new FlyingSword(start, end, 18 + (i % 7), i * 19.0));
+        }
+    }
+
+    private static final class FlyingSword {
+        final double sx, sy, sz, tx, ty, tz, spin;
+        final int life;
+        int age;
+        FlyingSword(Vec3d start, Vec3d end, int life, double spin) {
+            sx = start.x; sy = start.y; sz = start.z;
+            tx = end.x; ty = end.y; tz = end.z;
+            this.life = life; this.spin = spin;
+        }
     }
 }

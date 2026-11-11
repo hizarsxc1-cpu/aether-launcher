@@ -33,7 +33,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
         // Video controls: left = Basic, right = Physic, Shift+right = Blade Storm,
         // Shift+left = Penghakiman. Vanilla left-click remains the Basic Attack.
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-            if (!world.isClient || hand != net.minecraft.util.Hand.MAIN_HAND) return ActionResult.PASS;
+            if (!world.isClient || hand != net.minecraft.util.Hand.MAIN_HAND || !isDiamondSword(player)) return ActionResult.PASS;
             MinecraftClient c = MinecraftClient.getInstance();
             if (player.isSneaking()) {
                 if (judgmentCd == 0) judgment(c);
@@ -48,7 +48,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
         });
 
         AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) -> {
-            if (world.isClient && hand == net.minecraft.util.Hand.MAIN_HAND && player.isSneaking()) {
+            if (world.isClient && hand == net.minecraft.util.Hand.MAIN_HAND && isDiamondSword(player) && player.isSneaking()) {
                 if (judgmentCd == 0) judgment(MinecraftClient.getInstance());
                 return ActionResult.FAIL;
             }
@@ -56,7 +56,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
         });
 
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-            if (!world.isClient || hand != net.minecraft.util.Hand.MAIN_HAND) return ActionResult.PASS;
+            if (!world.isClient || hand != net.minecraft.util.Hand.MAIN_HAND || !isDiamondSword(player)) return ActionResult.PASS;
             MinecraftClient c = MinecraftClient.getInstance();
             if (player.isSneaking()) {
                 if (stormCd == 0) bladeStorm(c);
@@ -78,7 +78,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
         });
 
         UseItemCallback.EVENT.register((player, world, hand) -> {
-            if (!world.isClient || hand != net.minecraft.util.Hand.MAIN_HAND)
+            if (!world.isClient || hand != net.minecraft.util.Hand.MAIN_HAND || !isDiamondSword(player))
                 return TypedActionResult.pass(player.getStackInHand(hand));
             MinecraftClient c = MinecraftClient.getInstance();
             if (player.isSneaking()) {
@@ -98,8 +98,13 @@ public final class TelekineticBladesClient implements ClientModInitializer {
             if (strikeCd > 0) strikeCd--;
             if (stormCd > 0) stormCd--;
             if (judgmentCd > 0) judgmentCd--;
-            if (tick % 3 == 0) orbitBlades(client);
+            if (tick % 3 == 0 && isDiamondSword(client.player)) orbitBlades(client);
         });
+    }
+
+    private static boolean isDiamondSword(PlayerEntity player) {
+        // Enchantments do not affect eligibility: only the held item type matters.
+        return player != null && player.getMainHandStack().isOf(net.minecraft.item.Items.DIAMOND_SWORD);
     }
 
     private static List<LivingEntity> targets(MinecraftClient c, double range, double cone) {
@@ -318,6 +323,7 @@ final class BladeVisuals {
             // Persistent telekinetic formation: four full 3D blades hover behind
             // the player, instead of representing the idle blades with particles only.
             var player = client.player;
+            if (player.getMainHandStack().isOf(net.minecraft.item.Items.DIAMOND_SWORD)) {
             double bodyYaw = Math.toRadians(player.getYaw());
             double backX = Math.sin(bodyYaw);
             double backZ = -Math.cos(bodyYaw);
@@ -345,6 +351,7 @@ final class BladeVisuals {
                         net.minecraft.client.render.OverlayTexture.DEFAULT_UV,
                         matrices, consumers, context.world(), player.age + i);
                 matrices.pop();
+            }
             }
         });
     }

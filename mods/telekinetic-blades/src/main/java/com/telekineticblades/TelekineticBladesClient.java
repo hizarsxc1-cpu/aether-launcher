@@ -314,6 +314,38 @@ final class BladeVisuals {
                         matrices, consumers, context.world(), sword.age);
                 matrices.pop();
             }
+
+            // Persistent telekinetic formation: four full 3D blades hover behind
+            // the player, instead of representing the idle blades with particles only.
+            var player = client.player;
+            double bodyYaw = Math.toRadians(player.getYaw());
+            double backX = Math.sin(bodyYaw);
+            double backZ = -Math.cos(bodyYaw);
+            double sideX = Math.cos(bodyYaw);
+            double sideZ = Math.sin(bodyYaw);
+            for (int i = 0; i < 4; i++) {
+                double phase = player.age * 0.045 + i * Math.PI * 0.5;
+                double sideOffset = Math.sin(phase) * 0.34 + (i - 1.5) * 0.30;
+                double backOffset = 0.75 + Math.cos(phase * 0.7) * 0.16;
+                double x = player.getX() + backX * backOffset + sideX * sideOffset;
+                double y = player.getY() + 1.15 + Math.sin(phase * 1.35) * 0.20;
+                double z = player.getZ() + backZ * backOffset + sideZ * sideOffset;
+                matrices.push();
+                matrices.translate(x - camera.x, y - camera.y, z - camera.z);
+                matrices.multiply(net.minecraft.util.math.RotationAxis.POSITIVE_Y.rotationDegrees(
+                        player.getYaw() + (float) (Math.sin(phase) * 13.0)));
+                matrices.multiply(net.minecraft.util.math.RotationAxis.POSITIVE_X.rotationDegrees(
+                        (float) (18.0 + Math.cos(phase) * 8.0)));
+                matrices.multiply(net.minecraft.util.math.RotationAxis.POSITIVE_Z.rotationDegrees(
+                        (float) (Math.sin(phase * 0.8) * 12.0)));
+                matrices.scale(0.92f, 0.92f, 0.92f);
+                renderer.renderItem(BLADE,
+                        net.minecraft.client.render.model.json.ModelTransformationMode.FIXED,
+                        net.minecraft.client.render.LightmapTextureManager.MAX_LIGHT_COORDINATE,
+                        net.minecraft.client.render.OverlayTexture.DEFAULT_UV,
+                        matrices, consumers, context.world(), player.age + i);
+                matrices.pop();
+            }
         });
     }
 

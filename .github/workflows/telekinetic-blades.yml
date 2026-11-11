@@ -1,0 +1,31 @@
+name: Build Telekinetic Blades
+on:
+  push:
+    branches: [h-fastanchor-mod]
+    paths:
+      - 'mods/telekinetic-blades/**'
+      - '.github/workflows/telekinetic-blades.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.8'
+      - name: Build mod JAR
+        working-directory: mods/telekinetic-blades
+        run: gradle build --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Telekinetic-Blades-Fabric-1.21
+          path: |
+            mods/telekinetic-blades/build/libs/*.jar
+            !mods/telekinetic-blades/build/libs/*-sources.jar

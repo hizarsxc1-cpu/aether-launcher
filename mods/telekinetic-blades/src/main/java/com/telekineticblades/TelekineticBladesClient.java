@@ -17,6 +17,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
@@ -40,6 +41,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
             }
             if (entity instanceof LivingEntity living && basicCd == 0) {
                 basicEffect(c, living);
+                CameraTrack.start(c, living, 12);
                 basicCd = 5;
             }
             return ActionResult.PASS;
@@ -91,6 +93,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
             if (client.player == null || client.world == null) return;
             tick++;
             BladeVisuals.tick();
+            CameraTrack.tick(client);
             if (basicCd > 0) basicCd--;
             if (strikeCd > 0) strikeCd--;
             if (stormCd > 0) stormCd--;
@@ -129,6 +132,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
     private static void physicStrike(MinecraftClient c) {
         LivingEntity e = target(c, 14.0, 0.10);
         if (e == null) { message(c, "Arahkan crosshair ke musuh untuk Physic Strike"); return; }
+        CameraTrack.start(c, e, 24);
         Vec3d center = e.getBoundingBox().getCenter();
         for (int i = 0; i < 36; i++) {
             double a = i * Math.PI * 2 / 36.0;
@@ -144,6 +148,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
     private static void bladeStorm(MinecraftClient c) {
         List<LivingEntity> list = targets(c, 18.0, -0.20).stream().limit(5).toList();
         if (list.isEmpty()) { message(c, "Arahkan crosshair ke area musuh untuk Blade Storm"); return; }
+        CameraTrack.start(c, list.get(0), 36);
         for (LivingEntity e : list) {
             Vec3d p = e.getBoundingBox().getCenter();
             BladeVisuals.volley(c, e, 8, 2.0, 18);
@@ -166,6 +171,7 @@ public final class TelekineticBladesClient implements ClientModInitializer {
     private static void judgment(MinecraftClient c) {
         List<LivingEntity> list = targets(c, 20.0, -0.30).stream().limit(8).toList();
         if (list.isEmpty()) { message(c, "Arahkan crosshair ke musuh untuk Penghakiman"); return; }
+        CameraTrack.start(c, list.get(0), 44);
         for (LivingEntity e : list) {
             Vec3d p = e.getBoundingBox().getCenter();
             BladeVisuals.judgmentFan(c, e, 22);
@@ -224,6 +230,44 @@ public final class TelekineticBladesClient implements ClientModInitializer {
     }
 }
 
+
+
+final class CameraTrack {
+    private static LivingEntity target;
+    private static int remaining, returning;
+    private static float savedYaw, savedPitch;
+    private CameraTrack() {}
+    static void start(MinecraftClient client, LivingEntity entity, int duration) {
+        if (client.player == null || entity == null) return;
+        target = entity;
+        savedYaw = client.player.getYaw();
+        savedPitch = client.player.getPitch();
+        remaining = duration;
+        returning = 8;
+    }
+    static void tick(MinecraftClient client) {
+        if (client.player == null) { target = null; remaining = returning = 0; return; }
+        PlayerEntity player = client.player;
+        if (remaining > 0 && target != null && target.isAlive()) {
+            Vec3d delta = target.getBoundingBox().getCenter().subtract(player.getEyePos());
+            if (delta.lengthSquared() > 0.0001) {
+                float wantedYaw = (float)Math.toDegrees(Math.atan2(-delta.x, delta.z));
+                float wantedPitch = (float)-Math.toDegrees(Math.atan2(delta.y, Math.sqrt(delta.x*delta.x + delta.z*delta.z)));
+                player.setYaw(player.getYaw() + MathHelper.wrapDegrees(wantedYaw - player.getYaw()) * 0.22f);
+                player.setPitch(MathHelper.clamp(player.getPitch() + (wantedPitch - player.getPitch()) * 0.18f, -80.0f, 80.0f));
+            }
+            remaining--;
+            if (remaining == 0) target = null;
+            return;
+        }
+        if (returning > 0) {
+            player.setYaw(player.getYaw() + MathHelper.wrapDegrees(savedYaw - player.getYaw()) * 0.24f);
+            player.setPitch(player.getPitch() + (savedPitch - player.getPitch()) * 0.24f);
+            returning--;
+            if (returning == 0) { player.setYaw(savedYaw); player.setPitch(savedPitch); }
+        }
+    }
+}
 
 /**
  * Client-only animated 3D sword visuals. Uses vanilla item models so the blades
